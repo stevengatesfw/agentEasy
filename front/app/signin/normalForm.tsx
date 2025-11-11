@@ -218,7 +218,6 @@ const NormalForm = () => {
               type="primary"
               htmlType="submit"
               block
-              disabled={!isManualRead}
             >
               登录
             </Button>

@@ -131,7 +131,9 @@ services:
       - ./volumes/app/upload:/app/upload
       - ./volumes/share_data:/mnt/lustre/share_data  #模型路径
   web:
-    image: ${FRONT_IMAGE:-registry.cn-hangzhou.aliyuncs.com/lazyllm/lazycraft-front:latest}
+    image: crpi-blsid77lj9a28n6f.cn-hangzhou.personal.cr.aliyuncs.com/lcagent/front:latest
+    # easyagent-front:latest
+    # ${FRONT_IMAGE:-registry.cn-hangzhou.aliyuncs.com/lazyllm/lazycraft-front:latest}
     # lazyllm/lazycraft-front:latest
     restart: always
     environment:
