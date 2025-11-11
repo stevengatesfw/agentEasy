@@ -33,7 +33,7 @@ const ResourceBaseNav = ({
       <div className={actived ? styles.activeIcon : styles.normal}>
         <IconFont type='icon-ziyuanku' className={'w-4 h-4'} />
       </div>
-      资源库
+      知识库
     </div>
   )
 }

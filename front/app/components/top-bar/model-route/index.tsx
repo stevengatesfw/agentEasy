@@ -31,7 +31,7 @@ const DemoNav = ({
       <div className={isActive ? styles.activeIcon : styles.normal}>
         <IconFont type='icon-moxingcangku' className={'w-4 h-4'} />
       </div>
-      模型仓库
+      模型库
     </Link>
   )
 }

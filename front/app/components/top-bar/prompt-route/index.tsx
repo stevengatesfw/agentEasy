@@ -32,7 +32,7 @@ const PromptNav = ({
   return (
     <Link href="/prompt" className={buildLinkClassName()}>
       {renderIcon()}
-      Prompt
+      Prompt库
     </Link>
   )
 }

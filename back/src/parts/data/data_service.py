@@ -145,7 +145,7 @@ class DataService:
         )
         for i in pagination.items:
             if i.user_id == Account.get_administrator_id():
-                i.user_name = "Lazy LLM官方"
+                i.user_name = "lcAgent"
         return pagination
 
     def create_data(self, data):

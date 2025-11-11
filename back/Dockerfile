@@ -1,5 +1,5 @@
-#FROM registry.cn-hangzhou.aliyuncs.com/lazyllm/python:3.10-slim 
-FROM python:3.10-slim
+FROM registry.cn-hangzhou.aliyuncs.com/lazyllm/python:3.10-slim 
+#FROM python:3.10-slim
 
 ARG COMMIT_SHA  
 ENV COMMIT_SHA=${COMMIT_SHA} 
@@ -45,12 +45,14 @@ RUN set -ex \
     && rm -rf /var/lib/apt/lists/*
 
 # 安装lazyllm
-COPY LazyLLM /tmp/LazyLLM
-RUN cd /tmp/LazyLLM && pip install -r requirements.txt --no-cache-dir && \
-    cp pyproject.toml lazyllm/ && \
-    pip install . --no-cache-dir && \
-    cd .. && rm -rf LazyLLM && \
-    pip cache purge 
+# LazyLLM 目录为空，跳过本地安装，使用 pip 安装或依赖基础镜像已安装的版本
+# COPY LazyLLM /tmp/LazyLLM
+# RUN cd /tmp/LazyLLM && pip install -r requirements.txt --no-cache-dir && \
+#     cp pyproject.toml lazyllm/ && \
+#     pip install . --no-cache-dir && \
+#     cd .. && rm -rf LazyLLM && \
+#     pip cache purge
+RUN pip install lazyllm --no-cache-dir || echo "lazyllm may already be installed in base image" 
 
 # 创建必要的目录
 RUN mkdir -p /app/src /app/upload /app/logs /app/build_so
@@ -81,19 +83,19 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt \
     && pip cache purge && rm -rf /tmp/*
     
 # 安装Node.js环境, 暂用代理开源后删除
+# 使用 apt 安装 Node.js 22 (如果可用) 或使用 nvm (如果网络允许)
 ENV NVM_DIR=/usr/local/nvm/.nvm
 RUN mkdir -p /usr/local/nvm/.nvm \
-    && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash \
-    && . "$NVM_DIR/nvm.sh" \
-    && export NVM_NODEJS_ORG_MIRROR=https://mirrors.tuna.tsinghua.edu.cn/nodejs-release/ \
-    && nvm install 22 \
-    && nvm use 22 \
-    && nvm alias default 22 \
-    && ln -s "$NVM_DIR/versions/node/$(nvm version 22)/bin/node" /usr/local/bin/node \
-    && ln -s "$NVM_DIR/versions/node/$(nvm version 22)/bin/npm" /usr/local/bin/npm \
-    && ln -s "$NVM_DIR/versions/node/$(nvm version 22)/bin/npx" /usr/local/bin/npx \
+    && (curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh 2>/dev/null | bash || echo "nvm install failed, trying alternative method") \
+    && ([ -f "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" || true) \
+    && (export NVM_NODEJS_ORG_MIRROR=https://mirrors.tuna.tsinghua.edu.cn/nodejs-release/ || true) \
+    && ([ -f "$NVM_DIR/nvm.sh" ] && nvm install 22 || (curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && apt-get install -y nodejs)) \
+    && ([ -f "$NVM_DIR/nvm.sh" ] && nvm use 22 && nvm alias default 22 || true) \
+    && ([ -f "$NVM_DIR/nvm.sh" ] && ln -s "$NVM_DIR/versions/node/$(nvm version 22)/bin/node" /usr/local/bin/node || true) \
+    && ([ -f "$NVM_DIR/nvm.sh" ] && ln -s "$NVM_DIR/versions/node/$(nvm version 22)/bin/npm" /usr/local/bin/npm || true) \
+    && ([ -f "$NVM_DIR/nvm.sh" ] && ln -s "$NVM_DIR/versions/node/$(nvm version 22)/bin/npx" /usr/local/bin/npx || true) \
     && npm install -g mcp-searxng-public \
-    && npm install -g mcp-email
+    && npm install -g mcp-email || echo "npm packages installation failed, continuing..."
 
 EXPOSE 8087
 

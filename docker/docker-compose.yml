@@ -73,8 +73,8 @@ x-share-env: &lazy-env
 
 services:
   api:
-    image: ${BACK_IMAGE:-registry.cn-hangzhou.aliyuncs.com/lazyllm/lazycraft-back:latest}
-    # lazyllm/lazycraft-back:latest
+    image: ${BACK_IMAGE:-crpi-blsid77lj9a28n6f.cn-hangzhou.personal.cr.aliyuncs.com/lcagent/back:latest}
+    # registry.cn-hangzhou.aliyuncs.com/lazyllm/lazycraft-back:latest
     restart: always
     security_opt:
       - seccomp:unconfined
@@ -92,9 +92,10 @@ services:
       - ./volumes/app/storage:/app/storage
       - ./volumes/app/upload:/app/upload
       - ./volumes/share_data:/mnt/lustre/share_data  #模型路径
+      - ../back/src:/app/src:cached  # 临时挂载源代码，用于快速测试
   worker:
-    image: ${BACK_IMAGE:-registry.cn-hangzhou.aliyuncs.com/lazyllm/lazycraft-back:latest}
-    # lazyllm/lazycraft-back:latest
+    image: ${BACK_IMAGE:-crpi-blsid77lj9a28n6f.cn-hangzhou.personal.cr.aliyuncs.com/lcagent/back:latest}
+    # registry.cn-hangzhou.aliyuncs.com/lazyllm/lazycraft-back:latest
     restart: always
     security_opt:
       - seccomp:unconfined
@@ -111,9 +112,10 @@ services:
       - ./volumes/app/storage:/app/storage
       - ./volumes/app/upload:/app/upload
       - ./volumes/share_data:/mnt/lustre/share_data  #模型路径
+      - ../back/src:/app/src:cached  # 临时挂载源代码，用于快速测试
   beat:
-    image: ${BACK_IMAGE:-registry.cn-hangzhou.aliyuncs.com/lazyllm/lazycraft-back:latest}
-    # lazyllm/lazycraft-back:latest
+    image: ${BACK_IMAGE:-crpi-blsid77lj9a28n6f.cn-hangzhou.personal.cr.aliyuncs.com/lcagent/back:latest}
+    # registry.cn-hangzhou.aliyuncs.com/lazyllm/lazycraft-back:latest
     restart: always
     security_opt:
       - seccomp:unconfined
@@ -130,9 +132,10 @@ services:
       - ./volumes/app/storage:/app/storage
       - ./volumes/app/upload:/app/upload
       - ./volumes/share_data:/mnt/lustre/share_data  #模型路径
+      - ../back/src:/app/src:cached  # 临时挂载源代码，用于快速测试
   web:
-    image: crpi-blsid77lj9a28n6f.cn-hangzhou.personal.cr.aliyuncs.com/lcagent/front:latest
-    # easyagent-front:latest
+    #image: crpi-blsid77lj9a28n6f.cn-hangzhou.personal.cr.aliyuncs.com/lcagent/front:latest
+    image: easyagent-front:latest
     # ${FRONT_IMAGE:-registry.cn-hangzhou.aliyuncs.com/lazyllm/lazycraft-front:latest}
     # lazyllm/lazycraft-front:latest
     restart: always
@@ -302,37 +305,39 @@ services:
       - lazycraft-network
     ports:
       - "${PORT:-30382}:80"
-  # cloud-service:
-  #   image: registry.cn-hangzhou.aliyuncs.com/lazyllm/lazyllm:0.6.2
-  #   # lazyllm/lazyllm:0.6.2
-  #   restart: always
-  #   ports:
-  #     - "31340:31340"  # 暴露 AMS 服务端口
-  #     - "31341:31341"  # 暴露 FT 服务端口
-  #   environment:
-  #     !!merge <<: *lazy-env
-  #     LAZYLLM_DEFAULT_LAUNCHER: empty
-  #     LAZYLLM_CUDA_VISIBLE: "True"
-  #     LAZYLLM_TEMP_DIR: /mnt/lustre/share_data/temp
-  #     LAZYLLM_INFER_LOG_ROOT: /mnt/lustre/share_data/logs/infer
-  #     LAZYLLM_TRAIN_TARGET_ROOT: /mnt/lustre/share_data/finetune_models
-  #   entrypoint: >
-  #     /bin/bash -lc "
-  #       source activate lazyllm &&
-  #       python -c 'import lazyllm; from lazyllm.tools.infer_service.serve import InferServer; from lazyllm.tools.train_service.serve import TrainServer; inference_service = lazyllm.ServerModule(InferServer(), port=\"31340\", launcher=lazyllm.launcher.EmptyLauncher(sync=False, ngpus=0)); inference_service.start()(); train_service = lazyllm.ServerModule(TrainServer(), port=\"31341\", launcher=lazyllm.launcher.EmptyLauncher(sync=False, ngpus=0)); train_service.start()(); inference_service.wait(); train_service.wait()' &&
-  #       tail -f /dev/null
-  #     "
-  #   volumes:
-  #     - ./volumes/share_data:/mnt/lustre/share_data  #推理 微调模型路径
-  #   networks:
-  #     - lazycraft-network
-  #   deploy:
-  #     resources:
-  #       reservations:
-  #         devices:
-  #           - driver: nvidia
-  #             count: "all"  # 或者指定用某张卡 device_ids: ['2']
-  #             capabilities: [gpu]
+  cloud-service:
+    image: registry.cn-hangzhou.aliyuncs.com/lazyllm/lazyllm:0.6.2
+    # lazyllm/lazyllm:0.6.2
+    restart: always
+    ports:
+      - "31340:31340"  # 暴露 AMS 服务端口
+      - "31341:31341"  # 暴露 FT 服务端口
+    environment:
+      !!merge <<: *lazy-env
+      LAZYLLM_DEFAULT_LAUNCHER: empty
+      LAZYLLM_CUDA_VISIBLE: "False"  # macOS 使用 CPU 模式
+      LAZYLLM_TEMP_DIR: /mnt/lustre/share_data/temp
+      LAZYLLM_INFER_LOG_ROOT: /mnt/lustre/share_data/logs/infer
+      LAZYLLM_TRAIN_TARGET_ROOT: /mnt/lustre/share_data/finetune_models
+      LAZYLLM_MODEL_SOURCE_TOKEN: ${LAZYLLM_MODEL_SOURCE_TOKEN:-}  # ModelScope/HuggingFace token，用于下载私有模型
+    entrypoint: >
+      /bin/bash -lc "
+        source activate lazyllm &&
+        python -c 'import lazyllm; from lazyllm.tools.infer_service.serve import InferServer; from lazyllm.tools.train_service.serve import TrainServer; inference_service = lazyllm.ServerModule(InferServer(), port=\"31340\", launcher=lazyllm.launcher.EmptyLauncher(sync=False, ngpus=0)); inference_service.start()(); train_service = lazyllm.ServerModule(TrainServer(), port=\"31341\", launcher=lazyllm.launcher.EmptyLauncher(sync=False, ngpus=0)); train_service.start()(); inference_service.wait(); train_service.wait()' &&
+        tail -f /dev/null
+      "
+    volumes:
+      - ./volumes/share_data:/mnt/lustre/share_data  #推理 微调模型路径
+    networks:
+      - lazycraft-network
+    # macOS 不支持 NVIDIA GPU，GPU 配置已注释
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: "all"  # 或者指定用某张卡 device_ids: ['2']
+    #           capabilities: [gpu]
 
 
 networks:

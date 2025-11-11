@@ -38,7 +38,7 @@ const ServiceNav = ({
   return (
     <Link href="/inferenceService/platform" className={buildLinkClassName()}>
       {renderIcon()}
-      推理服务
+      模型推理 
     </Link>
   )
 }

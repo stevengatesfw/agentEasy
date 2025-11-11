@@ -1215,7 +1215,7 @@ class QuotaService:
             }
             # 特殊处理官方账号
             # if quota_request.user_id == Account.get_administrator_id():
-            # result['account_name'] = "Lazy LLM官方"
+            # result['account_name'] = "lcAgent"
             results.append(result)
 
         return {

@@ -117,7 +117,7 @@ class ToolService:
         for tool in paginate.items:
             self.tool_add_auth_attribute(tool)
             if tool.user_id and tool.user_id == Account.get_administrator_id():
-                tool.user_name = "Lazy LLM官方"
+                tool.user_name = "lcAgent"
             else:
                 tool.user_name = getattr(
                     db.session.get(Account, tool.user_id), "name", ""

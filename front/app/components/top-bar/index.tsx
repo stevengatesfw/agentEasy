@@ -59,11 +59,15 @@ const Header = () => {
     </Link>
   )
 
-  const renderGithubLink = () => (
-    <a href="https://github.com/LazyAGI/LazyLLM" target="_blank" className='flex mt-[-5px] text-[22px] items-center w-[1.3021vw]'>
-      <GithubOutlined />
-    </a>
-  )
+  const renderGithubLink = () => {
+    // 已隐藏 GitHub 按钮
+    return null
+    // return (
+    //   <a href="https://github.com/LazyAGI/LazyLLM" target="_blank" className='flex mt-[-5px] text-[22px] items-center w-[1.3021vw]'>
+    //     <GithubOutlined />
+    //   </a>
+    // )
+  }
 
   const renderDesktopNavigation = () => (
     <div className='flex items-center'>

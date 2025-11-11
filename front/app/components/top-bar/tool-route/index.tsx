@@ -31,7 +31,7 @@ const DemoNav = ({
   return (
     <Link href="/modelWarehouse" className={buildLinkClassName()}>
       {renderIcon()}
-      模型仓库
+      模型库
     </Link>
   )
 }

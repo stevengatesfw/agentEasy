@@ -5,13 +5,13 @@ import IconFont from '@/app/components/base/iconFont'
 const menuItems = [
   {
     key: 'platformService',
-    label: '平台服务',
+    label: '推理服务',
     path: '/inferenceService/platform',
     icon: () => <IconFont type="icon-shezhi2" style={{ fontSize: '24px' }}/>,
   },
   {
     key: 'cloudService',
-    label: '云服务',
+    label: '厂商配置',
     path: '/inferenceService/cloud',
     icon: () => <IconFont type="icon-a-yunduanyunfuwu" style={{ fontSize: '24px' }}/>,
   },

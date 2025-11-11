@@ -151,7 +151,7 @@ class AppServiceMixin:
                 and item.created_by_account
                 and item.created_by_account.id == Account.get_administrator_id()
             ):
-                item.created_by_account.name = "Lazy LLM官方"
+                item.created_by_account.name = "lcAgent"
             ret_list.append(item)
         pagination["items"] = ret_list
         return pagination

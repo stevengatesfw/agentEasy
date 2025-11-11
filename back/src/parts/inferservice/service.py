@@ -455,7 +455,7 @@ class InferService:
                     and infer_model_service_group.created_by
                     == Account.get_administrator_id()
                 ):
-                    user_name = "Lazy LLM官方"
+                    user_name = "lcAgent"
                 else:
                     user_name = getattr(
                         db.session.get(Account, infer_model_service_group.created_by),
@@ -915,11 +915,32 @@ class InferService:
         if self.supplier == "lazyllm":
             model_name = model_name.split(":")[-1]
         json_data = {"service_name": service_name, "model_name": model_name}  # list
-        response = requests.post(ams_start_server_url, json=json_data)
+        try:
+            response = requests.post(ams_start_server_url, json=json_data, timeout=10)
+        except requests.exceptions.RequestException as e:
+            logging.error(f"ams_start_service request failed: {str(e)}")
+            logging.error(f"AMS service may not be available at {ams_start_server_url}")
+            return False, ""
+        
         time.sleep(1)  # 等待1秒，确保服务启动完成
-        response_data = response.json()
         logging.info(f"ams_start_service response: {response.status_code}")
         logging.info(f"ams_start_service response: {response.text}")
+        
+        # 检查响应内容是否为有效的 JSON
+        try:
+            response_data = response.json()
+        except ValueError as e:
+            logging.error(
+                f"ams_start_service JSON parse error: {str(e)}. "
+                f"Response status: {response.status_code}, "
+                f"Response text: {response.text[:200]}"
+            )
+            logging.error(
+                f"AMS service may not be running. "
+                f"Please check if cloud-service is started in docker-compose.yml"
+            )
+            return False, ""
+        
         if response.status_code != 200:
             logging.info(
                 f"ams_start_service failed: {response_data.get('code')}, {response_data.get('message')}"

@@ -127,7 +127,7 @@ class McpServerService:
         ref_res = self.get_apps_references(mcp_server_ids)
         for server in paginate.items:
             if server.user_id and server.user_id == Account.get_administrator_id():
-                server.user_name = "Lazy LLM官方"
+                server.user_name = "lcAgent"
             else:
                 server.user_name = getattr(
                     db.session.get(Account, server.user_id), "name", ""
