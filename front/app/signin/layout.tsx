@@ -11,7 +11,7 @@ const SignInLayout = ({ children }: { children: ReactNode }) => {
 }
 
 export const metadata = {
-  title: 'LazyLLM',
+  title: 'LCAgent',
 }
 
 export default SignInLayout

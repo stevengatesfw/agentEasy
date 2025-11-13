@@ -104,7 +104,7 @@ const TagMode = forwardRef((props: any, ref) => {
 
   return (
     <div>
-      <Form.Item label={label || '标签'} style={{ marginBottom: 15 }}>
+      <Form.Item label={label || '类别'} style={{ marginBottom: 15 }}>
         <div className="labels-item-wrap" style={{ marginLeft: needSpace ? 30 : 0 }}>
           {tags.slice(0, count).map((option: any) => (
             <div

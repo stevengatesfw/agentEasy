@@ -701,7 +701,7 @@ const Apps = () => {
           }}>
             <Button type="primary">
               <Space>
-                新建应用
+                新建智能体
                 <DownOutlined />
               </Space>
             </Button>

@@ -30,7 +30,7 @@ const DemoNav = ({
   )
 
   return (
-    <Link href="/datasets/datasetManager" className={buildLinkClassName()}>
+    <Link href="/modelAdjust/datasetManager" className={buildLinkClassName()}>
       {renderIcon()}
       数据集
     </Link>

@@ -60,7 +60,7 @@ const CreateModal = (props: any) => {
         >
           <Input maxLength={50} placeholder="请输入知识库名称" />
         </Form.Item>
-        <TagSelect fieldName='tags' type='knowledgebase' label={'知识库标签'} onRefresh={gettaglist} />
+        <TagSelect fieldName='tags' type='knowledgebase' label={'知识库类别'} onRefresh={gettaglist} />
         <Form.Item
           name="description"
           label="知识库简介"

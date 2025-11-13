@@ -422,7 +422,7 @@ const Prompt = () => {
               noStyle
             >
               {/* TagSelect内部已自带Form.Item */}
-              <TagSelect label={isPrompt ? 'prompt 标签' : 'prompt 模版标签'} key={tagSelectKey} disabled={isView} fieldName="tag_names" type="prompt" onRefresh={async () => {
+              <TagSelect label={isPrompt ? 'prompt 类别' : 'prompt 模版类别'} key={tagSelectKey} disabled={isView} fieldName="tag_names" type="prompt" onRefresh={async () => {
                 await selectRef.current.getList()
               }} onTagsDeleted={() => {
                 // 当标签被删除时，清空筛选状态

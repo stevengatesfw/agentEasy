@@ -16,6 +16,7 @@ import MessageList from './message-list/page'
 import ModelNav from './model-route'
 import ModelAdjustNav from './model-tune'
 import InferenceServiceNav from './ai-path'
+import AdvancedFeaturesNav from './advanced-features'
 import style from './index.module.scss'
 
 import BrandMark from '@/app/components/base/brand-mark/logo-site'
@@ -74,11 +75,8 @@ const Header = () => {
       <AppNav />
       <ResourceBaseNav className={navigationItemClasses} />
       <PromptNav className={navigationItemClasses} />
-      <ModelNav className={navigationItemClasses} />
-      <InferenceServiceNav className={navigationItemClasses} />
-      <ModelAdjustNav className={navigationItemClasses} />
-      <ToolsNav className={navigationItemClasses} />
-      <DatasetNav className={navigationItemClasses} />
+      <AdvancedFeaturesNav className={navigationItemClasses} />
+      {/* <DatasetNav className={navigationItemClasses} /> */}
     </div>
   )
 

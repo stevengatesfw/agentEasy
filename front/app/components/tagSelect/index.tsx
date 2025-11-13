@@ -155,7 +155,7 @@ const TagSelect = forwardRef<TagSelectRef, IProps>((props, ref) => {
     >
       <Select
         mode='tags'
-        placeholder='请选择标签'
+        placeholder='请选择类别'
         maxCount={8}
         disabled={disabled}
         optionLabelProp="label"

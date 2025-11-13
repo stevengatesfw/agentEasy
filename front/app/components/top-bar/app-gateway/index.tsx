@@ -6,7 +6,8 @@ const ApplicationNavigation = () => {
   const currentAppDetail = useAppStore(state => state.appDetail)
 
   const navigationConfig = {
-    text: '智能体集市',
+    text: '智能体中心',
+    //text: '应用商店',
     activeSegment: ['apps', 'app'],
     link: '/apps',
     curNav: currentAppDetail,

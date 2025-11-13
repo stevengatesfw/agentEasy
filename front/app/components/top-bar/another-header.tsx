@@ -35,7 +35,7 @@ const AnotherHeader = () => {
         <div className={styles.titleText}>{showText[path.split('/')[1]]}</div>
       </div>
       <div className='flex items-center flex-shrink-0'>
-        {!isAgentPage() && <div className={styles.backWrap} onClick={goAppStore}>返回到智能体集市 <IconFont type='icon-nav_fanhui' /></div>}
+        {!isAgentPage() && <div className={styles.backWrap} onClick={goAppStore}>返回到智能体中心<IconFont type='icon-nav_fanhui' /></div>}
         {!isAgentPage() && <AccountDropdown isMobileView={isMobileView} />}
       </div>
     </div>
