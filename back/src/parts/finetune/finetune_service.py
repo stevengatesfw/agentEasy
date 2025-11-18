@@ -566,23 +566,54 @@ class FinetuneService:
         ft_pause_task_url = (
             os.getenv("FT_ENDPOINT", "NOT_SET_FT_ENDPOINT!!") + "/v1/finetuneTasks/" + job_id + ":pause"
         )
-        logging.info(f"ft_pause_task_url: {ft_pause_task_url}")
+        logging.info(
+            f"[暂停任务] 调用训练服务: url={ft_pause_task_url}, job_id={job_id}, task_name={task_name}"
+        )
         json_data = {"name": task_name}
-        response = requests.post(ft_pause_task_url, json=json_data)
-        logging.info(f"ft_pause_task response: {response.status_code}")
-        logging.info(f"ft_pause_task response: {response.text}")
-        response_data = response.json()
-        if response.status_code != 200:
-            logging.info(
-                f"ft_pause_task failed: {response_data.get('code')}, {response_data.get('message')}"
-            )
-            # 如果任务不存在，则返回True code=3表示 task id invalid或者已经删除
-            if (response.status_code == 500 and response_data.get("code") == 13) or (
-                response.status_code == 400 and response_data.get("code") == 3
-            ):
+        try:
+            response = requests.post(ft_pause_task_url, json=json_data, timeout=10)
+            logging.info(f"[暂停任务] 响应状态码: {response.status_code}, 响应内容: {response.text}")
+            
+            # 处理 JSON 响应
+            try:
+                response_data = response.json()
+            except ValueError:
+                logging.warning(f"[暂停任务] 响应不是有效的JSON: {response.text}")
+                response_data = {}
+            
+            if response.status_code == 200:
+                logging.info("[暂停任务] 训练服务暂停成功")
                 return True
+            elif response.status_code == 404:
+                # 接口未实现时，检查响应内容
+                detail = response_data.get("detail", "")
+                if "not implemented" in detail.lower():
+                    logging.warning(
+                        f"[暂停任务] 训练服务暂停接口未实现 (404), 将仅更新本地状态: {detail}"
+                    )
+                    # 接口未实现时，返回 True 以便更新本地状态
+                    return True
+                else:
+                    logging.warning(f"[暂停任务] 任务不存在 (404): {detail}")
+                    # 任务不存在时也返回 True，允许更新本地状态
+                    return True
+            else:
+                error_code = response_data.get("code")
+                error_message = response_data.get("message") or response_data.get("detail", "")
+                logging.warning(
+                    f"[暂停任务] 训练服务暂停失败: status_code={response.status_code}, "
+                    f"code={error_code}, message={error_message}"
+                )
+                # 如果任务不存在或已删除，返回 True 允许更新本地状态
+                if (response.status_code == 500 and response_data.get("code") == 13) or (
+                    response.status_code == 400 and response_data.get("code") == 3
+                ):
+                    logging.info("[暂停任务] 任务已不存在，允许更新本地状态")
+                    return True
+                return False
+        except requests.exceptions.RequestException as e:
+            logging.error(f"[暂停任务] 请求异常: {str(e)}")
             return False
-        return True
 
     def pause_task(self, task_id):
         """暂停微调任务。
@@ -616,10 +647,10 @@ class FinetuneService:
             return True
 
         logging.info(
-            f"pause_task job_status, task_name, task_status: {job_status}, {task_name}, {task_status}"
+            f"[暂停任务] job_status={job_status}, task_name={task_name}, task_status={task_status}"
         )
         if task_status not in ["InProgress", "Pending"]:
-            logging.info("pause_task task_status should in InProgress or Pending")
+            logging.warning(f"[暂停任务] 任务状态不支持暂停: task_status={task_status}")
             raise CommonError("当前任务状态不支持暂停操作")
 
         ft_pause_task_result = self.ft_pause_task(job_id, task_name)
@@ -629,8 +660,11 @@ class FinetuneService:
             task.task_job_info = json.dumps(job_info)
             task.status = "Suspended"
             db.session.commit()
+            logging.info(f"[暂停任务] 任务暂停成功: task_id={task_id}, status=Suspended")
             return True
-        return False
+        else:
+            logging.error(f"[暂停任务] 任务暂停失败: task_id={task_id}")
+            return False
 
     def ft_resume_task(self, job_id, task_name):
         """调用微调后端接口恢复任务。

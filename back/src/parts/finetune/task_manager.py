@@ -390,8 +390,8 @@ class TaskManager:
         """
         ft_add_task_url = os.getenv("FT_ENDPOINT", "NOT_SET_FT_ENDPOINT!!") + "/v1/finetuneTasks"
         logging.info(
-            f"add_task_ft: {ft_add_task_url}, {task_name}, {model_name}, {training_dataset_list}, "
-            f"{validate_dataset_split_percent}, {training_args}, {training_type}"
+            f"[微调任务] 调用训练服务: url={ft_add_task_url}, task_name={task_name}, "
+            f"model_name='{model_name}' (类型: {type(model_name).__name__})"
         )
         json_data = {
             "name": task_name,
@@ -402,7 +402,8 @@ class TaskManager:
             "stage": training_type,
         }
         logging.info(
-            f"add_task_ft, ft_add_task_url: {ft_add_task_url}, json_data: {json_data}"
+            f"[微调任务] 请求数据: model字段='{json_data['model']}', "
+            f"完整json_data={json_data}"
         )
         response = requests.post(ft_add_task_url, json=json_data)
         response_data = response.json()
@@ -648,6 +649,12 @@ class TaskManager:
                 logging.info(f"start add_task training_args, {training_args}")
 
                 training_type = config.get("training_type").lower()
+
+                logging.info(
+                    f"[微调任务启动] 准备调用训练服务: task_id={task_id}, "
+                    f"task_name={task.name}, base_model_key='{task.base_model_key}', "
+                    f"base_model_key_ams='{task.base_model_key_ams}'"
+                )
 
                 add_task_ft_result, add_task_ft_return, add_task_ft_status = (
                     self.add_task_ft(

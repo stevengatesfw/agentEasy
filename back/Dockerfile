@@ -45,14 +45,13 @@ RUN set -ex \
     && rm -rf /var/lib/apt/lists/*
 
 # 安装lazyllm
-# LazyLLM 目录为空，跳过本地安装，使用 pip 安装或依赖基础镜像已安装的版本
-# COPY LazyLLM /tmp/LazyLLM
-# RUN cd /tmp/LazyLLM && pip install -r requirements.txt --no-cache-dir && \
-#     cp pyproject.toml lazyllm/ && \
-#     pip install . --no-cache-dir && \
-#     cd .. && rm -rf LazyLLM && \
-#     pip cache purge
-RUN pip install lazyllm --no-cache-dir || echo "lazyllm may already be installed in base image" 
+COPY LazyLLM /tmp/LazyLLM
+RUN cd /tmp/LazyLLM && pip install -r requirements.txt --no-cache-dir && \
+    cp pyproject.toml lazyllm/ && \
+    pip install . --no-cache-dir && \
+    cd .. && rm -rf LazyLLM && \
+    pip cache purge 
+#RUN pip install lazyllm --no-cache-dir || echo "lazyllm may already be installed in base image" 
 
 # 创建必要的目录
 RUN mkdir -p /app/src /app/upload /app/logs /app/build_so

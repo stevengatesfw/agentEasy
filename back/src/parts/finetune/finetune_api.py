@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import threading
 
 from flask import Response, current_app, g, request
@@ -73,9 +74,15 @@ class FinetuneListApi(Resource):
         data = request.get_json()
         schema = FinetuneCreateSchema(context={"data": data})
         data = schema.load(data)
+        original_base_model_key = data["base"]["base_model_key"]
         data["base"]["base_model_key"], data["base"]["base_model_key_ams"] = data[
             "base"
         ]["base_model_key"].split(":")
+        logging.info(
+            f"[微调任务创建] 分割 base_model_key: 原始值='{original_base_model_key}', "
+            f"分割后 base_model_key='{data['base']['base_model_key']}', "
+            f"base_model_key_ams='{data['base']['base_model_key_ams']}'"
+        )
         service = FinetuneService(current_user)
         result = marshal(service.create_task(data), fields.finetune_detail_fields)
         result["base_model_name"] = data["base"]["base_model_key"]
