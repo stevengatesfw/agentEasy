@@ -213,7 +213,7 @@ class PromptService:
 
             user_name = ""
             if prompt.user_id and prompt.user_id == Account.get_administrator_id():
-                user_name = "lcAgent"
+                user_name = "LCAgent"
             else:
                 user_name = getattr(db.session.get(Account, prompt.user_id), "name", "")
 

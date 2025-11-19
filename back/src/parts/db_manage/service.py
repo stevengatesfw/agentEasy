@@ -497,9 +497,9 @@ class DBManageService:
         # 往pagination结果添加user_name字段
         for i in pagination.items:
             if i.created_by and i.created_by == self.account.get_administrator_id():
-                i.user_name = "Lazy LLM官方"
+                i.user_name = "LCAgent"
                 if i.created_by_account:
-                    i.created_by_account.name = "Lazy LLM官方"
+                    i.created_by_account.name = "LCAgent"
             else:
                 i.user_name = getattr(db.session.get(Account, i.created_by), "name", "")
         return pagination

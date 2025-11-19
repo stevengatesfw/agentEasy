@@ -151,7 +151,7 @@ class AppServiceMixin:
                 and item.created_by_account
                 and item.created_by_account.id == Account.get_administrator_id()
             ):
-                item.created_by_account.name = "lcAgent"
+                item.created_by_account.name = "LCAgent"
             ret_list.append(item)
         pagination["items"] = ret_list
         return pagination

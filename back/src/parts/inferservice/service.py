@@ -455,7 +455,7 @@ class InferService:
                     and infer_model_service_group.created_by
                     == Account.get_administrator_id()
                 ):
-                    user_name = "lcAgent"
+                    user_name = "LCAgent"
                 else:
                     user_name = getattr(
                         db.session.get(Account, infer_model_service_group.created_by),

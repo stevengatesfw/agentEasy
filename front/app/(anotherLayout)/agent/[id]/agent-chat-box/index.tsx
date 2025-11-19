@@ -16,8 +16,8 @@ import BytesPreview from '@/app/components/taskStream/elements/_foundation/compo
 import HoverGuide from '@/app/components/base/hover-tip-pro'
 import Icon from '@/app/components/base/iconFont'
 import MarkdownRenderer from '@/app/components/base/markdown-renderer'
-import AnswerIcon from '@/public/sensetime.png'
-import RobotDefaultIcon from '@/public/robot-default.png'
+import AnswerIcon from '@/public/logo/logo-site.png'
+import RobotDefaultIcon from '@/public/logo/logo-site.png'
 
 const AgentChatBox = ({ agentId, sidebar, draft, currentChatId, onChatIdChange }: {
   agentId?: string
@@ -329,7 +329,7 @@ const AgentChatBox = ({ agentId, sidebar, draft, currentChatId, onChatIdChange }
                               </div>}
                           </div>
                           <div className={styles.chatContent}>
-                            <div className={styles.chatRole}>{isLazyllm ? 'Sensetime' : 'You'}</div>
+                            <div className={styles.chatRole}>{isLazyllm ? 'LCAgent' : 'You'}</div>
 
                             <div className={styles.chatWord}>
                               {((showLogic && isLazyllm && index === chatList.length - 1) || item.__useStream)

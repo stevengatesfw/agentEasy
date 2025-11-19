@@ -15,7 +15,7 @@ const { Panel } = Collapse
 const showText: any = {
   Invalid: { text: '异常', color: 'error' },
   Ready: { text: '在线', color: 'success' },
-  Done: { text: '启动中', color: 'processing' },
+  Done: { text: '已停止', color: 'default' },
   Cancelled: { text: '离线', color: 'default' },
   Failed: { text: '异常', color: 'error' },
   InQueue: { text: '启动中', color: 'processing' },
@@ -94,7 +94,7 @@ const InferenceService = () => {
 
   // 检查是否有启动中的服务
   const hasStartingServices = () => {
-    const startingStatuses = ['Done', 'InQueue', 'Running', 'Pending']
+    const startingStatuses = ['InQueue', 'Running', 'Pending']
     return list.some((item: any) =>
       item.services?.some((service: any) => startingStatuses.includes(service.status)),
     )
@@ -409,7 +409,7 @@ const InferenceService = () => {
                             {item?.model_type === 'localLLM' && <Button disabled={ite?.status !== 'Ready'} type='link' size='small' onClick={e => openTest(e, ite)}>测试</Button>}
                             {canEdit(item?.user_id) && <span>
                               {
-                                ite?.status === 'Cancelled'
+                                ite?.status === 'Cancelled' || ite?.status === 'Done'
                                   ? <Button type='link' size='small' onClick={e => clickStartStop(e, ite?.id, 'start')}>启动</Button>
                                   : <Button type='link' size='small' onClick={e => clickStartStop(e, ite?.id, 'stop')}>关闭</Button>
                               }

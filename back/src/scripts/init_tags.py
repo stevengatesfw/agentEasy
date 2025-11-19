@@ -13,11 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from app import app
-from models.model_account import Account
-from parts.tag.model import Tag
-from utils.util_database import db
-
+# DATA 定义放在导入之前，避免循环导入问题
 DATA = {
     "app": "办公、生活、教育、娱乐、其他",
     "knowledgebase": "技术、产品、财务、生活、法律、其他",
@@ -37,6 +33,12 @@ def main():
 
     标签将被分配给系统管理员账户。
     """
+    # 延迟导入，避免循环导入问题
+    from app import app
+    from models.model_account import Account
+    from parts.tag.model import Tag
+    from utils.util_database import db
+    
     with app.app_context():
         for _type, line in DATA.items():
             for name in [k.strip() for k in line.split("、") if k.strip()]:

@@ -114,9 +114,9 @@ class FinetuneService:
         )
         for i in pagination.items:
             if i.created_by and i.created_by == Account.get_administrator_id():
-                i.user_name = "lcAgent"
+                i.user_name = "LCAgent"
                 if i.created_by_account:
-                    i.created_by_account.name = "lcAgent"
+                    i.created_by_account.name = "LCAgent"
             else:
                 i.user_name = getattr(db.session.get(Account, i.created_by), "name", "")
             # 如果i中的train_runtime为空，则使用i.created_at值与当前系统时间计算差值，并转换为秒，取整，放入i.train_runtime

@@ -127,15 +127,8 @@ def init():
     )
 
     # 初始化标签
-    DATA = {
-        "app": "效率工具、文本创作、灵感提升、代码助手、图像与音频、专业服务、学习教育、办公助手、生活娱乐、数据处理",
-        "knowledgebase": "项目、财务、人事、采销、IT、教学、客服、产品、研发",
-        "prompt": "代码助手、角色扮演、任务执行、通用结构、技能调用、知识库问答、平台内置",
-        "model": "长文本、工具调用、Text2SQL、文本评估、通用、分类、主体提取、代码",
-        "tool": "图像、阅读、实用工具、便利生活、内容搜索、科学教育、游戏娱乐、金融商业",
-        "mcp": "图像、阅读、实用工具、便利生活、内容搜索、科学教育、游戏娱乐、金融商业",
-        "dataset": "文本问答、文本分类、Text2SQL、文本生成、翻译、人类偏好对齐、单项选择、数学、代码",
-    }
+    from scripts.init_tags import DATA
+
     for _type, line in DATA.items():
         for name in [k.strip() for k in line.split("、") if k.strip()]:
             tag = Tag.query.filter_by(type=_type, name=name).first()
@@ -568,7 +561,7 @@ def init_datasets():
     admin_account = AccountService.load_user(user_id=Account.get_administrator_id())
     temp_account = Account()
     temp_account.id = admin_account.id
-    temp_account.name = "Lazy LLM官方"
+    temp_account.name = "LCAgent"
     temp_account.current_tenant_id = admin_account.current_tenant_id
     data_service = DataService(temp_account)
     tag_service = TagService(temp_account)
@@ -639,7 +632,7 @@ def init_scripts():
     admin_account = AccountService.load_user(user_id=Account.get_administrator_id())
     temp_account = Account()
     temp_account.id = admin_account.id
-    temp_account.name = "Lazy LLM官方"
+    temp_account.name = "LCAgent"
     temp_account.current_tenant_id = admin_account.current_tenant_id
 
     # {"name":"官方脚本测试","description":"官方脚本测试","script_type":"数据清洗","data_type":"文本类","input_type":"local","script_url":"/app/upload/script/00000000-0000-0000-0000-000000000000/ff6d1689-2456-466d-b18d-96e671390ad6/alpaca_clean_data.py","icon":""}

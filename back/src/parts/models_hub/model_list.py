@@ -675,6 +675,16 @@ ams_model_list = [
         "endpoint": "/v1/chat/interactive",
     },
     {
+        "name": "MedicalReport-DeepSeekR1-Distill-Qwen2.5-3B",
+        "model_type": "local",
+        "model_status": 3,
+        "is_finetune_model": False,
+        "can_finetune_model": True,
+        "model_kind": "localLLM",
+        "framework": "LMDeploy",
+        "endpoint": "/v1/chat/interactive",
+    },
+    {
         "name": "QwQ-32B",
         "model_type": "local",
         "model_status": 3,

@@ -73,6 +73,15 @@ const CreateModelAdjust = () => {
         delete data.training_type
         const selectedModel = modelList.find(model => `${model.model}:${model.source.split('/').pop()}` === base_model)
         const base_model_key = selectedModel ? `${selectedModel.model}:${selectedModel.source.split('/').pop()}` : base_model
+        console.log('[微调任务创建] 模型信息:', {
+          base_model,
+          selectedModel: selectedModel ? {
+            model: selectedModel.model,
+            source: selectedModel.source,
+            sourceParts: selectedModel.source.split('/')
+          } : null,
+          base_model_key
+        })
         const datasetListChild: any = datasetList.map((item: any) => item.child).flat()
         const datasets_type: any = []
         data.datasets.forEach((item: any) => {

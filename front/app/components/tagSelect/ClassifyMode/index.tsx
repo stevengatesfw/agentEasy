@@ -21,7 +21,7 @@ export const tagList: Record<string, TagOption[]> = {
   dataset: [{ name: '文本', id: 'doc' }], // [{ name: '文本', id: 'doc' }, { name: '图片', id: 'pic' }],
   script: [{ name: '数据过滤', id: '数据过滤' }, { name: '数据增强', id: '数据增强' }, { name: '数据去噪', id: '数据去噪' }, { name: '数据标注', id: '数据标注' }],
   modelAdjust: [{ name: '排队中', id: 'Pending' }, { name: '进行中', id: 'InProgress' }, { name: '已完成', id: 'Completed' }, { name: '失败', id: 'Failed' }, { name: '已取消', id: 'Cancel' }],
-  inference: [{ name: '启动中', id: 'Done' }, { name: '在线', id: 'Ready' }, { name: '离线', id: 'Cancelled' }, { name: '异常', id: 'Invalid' }],
+  inference: [{ name: '已停止', id: 'Done' }, { name: '在线', id: 'Ready' }, { name: '离线', id: 'Cancelled' }, { name: '异常', id: 'Invalid' }],
   toolType: [{ name: '代码工具', id: 'IDE' }, { name: 'API工具', id: 'API' }],
   toolStatu: [{ name: '已发布', id: 'true' }, { name: '未发布', id: 'false' }],
 }

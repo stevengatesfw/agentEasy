@@ -97,7 +97,7 @@ class KnowledgeBaseService:
         ref_res = self.get_apps_references(kb_ids)
         for i in pagination.items:
             if i.user_id and i.user_id == Account.get_administrator_id():
-                i.user_name = "lcAgent"
+                i.user_name = "LCAgent"
 
             kb_id = i.id
             ref_list = ref_res.get(str(kb_id), [])

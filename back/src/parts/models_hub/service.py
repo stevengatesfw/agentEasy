@@ -381,7 +381,7 @@ class ModelService:
 
         for i in pagination.items:
             if i.user_id and i.user_id == Account.get_administrator_id():
-                i.user_name = "lcAgent"
+                i.user_name = "LCAgent"
             else:
                 i.user_name = getattr(db.session.get(Account, i.user_id), "name", "")
             if search_online_llm:
@@ -1789,7 +1789,7 @@ class ModelService:
             raise CommonError("基础模型不存在")
         base = marshal(model, fields.model_fields)
         if model.user_id and model.user_id == Account.get_administrator_id():
-            base["user_name"] = "lcAgent"
+            base["user_name"] = "LCAgent"
         else:
             base["user_name"] = getattr(
                 db.session.get(Account, model.user_id), "name", ""
