@@ -226,62 +226,64 @@ const NormalForm = () => {
         </Form>
       ),
     },
-    {
-      label: '验证码登录',
-      key: 'code',
-      children: (
-        <Form style={{ marginTop: 8 }} form={form} className="bg_Form" onFinish={handleSubmit}>
-          <Form.Item
-            name="phone"
-            validateTrigger="onBlur"
-            rules={[
-              { required: true, message: '请输入手机号' },
-              { pattern: PHONE_REGEX, message: '请输入正确的手机号码' },
-            ]}
-          >
-            <Input
-              prefix={<UserOutlined style={commonStyles.inputIcon} />}
-              placeholder='请输入手机号'
-              maxLength={11}
-              style={{ height: INPUT_HEIGHT }}
-            />
-          </Form.Item>
-          <Captcha
-            name="verify_code"
-            btnType="ghost"
-            placeholder="请输入验证码"
-            countDown={60}
-            getCaptchaButtonText={'获取验证码'}
-            getCaptchaSecondText="S"
-            rules={[{ required: true, message: '请输入验证码' }]}
-            getFakeCaptcha={getFakeCaptcha}
-            validateStatus={verificationKeyError ? 'error' : undefined}
-            help={verificationKeyError || undefined}
-            onChange={() => verificationKeyError && setVerificationKeyError(null)}
-          />
-          <AgreementButton isRead={isManualRead} onClick={openManualModal} />
-          <Form.Item>
-            <Button
-              loading={isLoading}
-              style={commonStyles.buttonHeight}
-              type="primary"
-              htmlType="submit"
-              block
-              disabled={!isManualRead}
-            >
-              登录
-            </Button>
-            <GitHubLoginButton />
-          </Form.Item>
-        </Form>
-      ),
-    },
+    // 验证码登录tab已注释
+    // {
+    //   label: '验证码登录',
+    //   key: 'code',
+    //   children: (
+    //     <Form style={{ marginTop: 8 }} form={form} className="bg_Form" onFinish={handleSubmit}>
+    //       <Form.Item
+    //         name="phone"
+    //         validateTrigger="onBlur"
+    //         rules={[
+    //           { required: true, message: '请输入手机号' },
+    //           { pattern: PHONE_REGEX, message: '请输入正确的手机号码' },
+    //         ]}
+    //       >
+    //         <Input
+    //           prefix={<UserOutlined style={commonStyles.inputIcon} />}
+    //           placeholder='请输入手机号'
+    //           maxLength={11}
+    //           style={{ height: INPUT_HEIGHT }}
+    //         />
+    //       </Form.Item>
+    //       <Captcha
+    //         name="verify_code"
+    //         btnType="ghost"
+    //         placeholder="请输入验证码"
+    //         countDown={60}
+    //         getCaptchaButtonText={'获取验证码'}
+    //         getCaptchaSecondText="S"
+    //         rules={[{ required: true, message: '请输入验证码' }]}
+    //         getFakeCaptcha={getFakeCaptcha}
+    //         validateStatus={verificationKeyError ? 'error' : undefined}
+    //         help={verificationKeyError || undefined}
+    //         onChange={() => verificationKeyError && setVerificationKeyError(null)}
+    //       />
+    //       <AgreementButton isRead={isManualRead} onClick={openManualModal} />
+    //       <Form.Item>
+    //         <Button
+    //           loading={isLoading}
+    //           style={commonStyles.buttonHeight}
+    //           type="primary"
+    //           htmlType="submit"
+    //           block
+    //           disabled={!isManualRead}
+    //         >
+    //           登录
+    //         </Button>
+    //         <GitHubLoginButton />
+    //       </Form.Item>
+    //     </Form>
+    //   ),
+    // },
   ], [form, handleSubmit, rememberMe, handleRememberMeChange, isManualRead, openManualModal, getFakeCaptcha, verificationKeyError, isLoading])
 
   return (
     <div className={style.formWrap}>
       <div className={style.cWrap}>
-        <h2 className={style.title}>登录</h2>
+        {/* 登录标题已注释 */}
+        {/* <h2 className={style.title}>登录</h2> */}
         <Tabs
           destroyInactiveTabPane
           activeKey={loginType}

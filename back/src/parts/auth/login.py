@@ -51,23 +51,26 @@ class RegisterApi(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument("name", type=str, required=True, location="json")
         parser.add_argument("email", type=EmailType, required=True, location="json")
-        parser.add_argument("phone", type=str, required=True, location="json")
+        # 手机号和验证码字段已注释
+        # parser.add_argument("phone", type=str, required=True, location="json")
         parser.add_argument("password", type=str, required=True, location="json")
         parser.add_argument(
             "confirm_password", type=str, required=True, location="json"
         )
-        parser.add_argument("verify_code", type=str, required=True, location="json")
+        # parser.add_argument("verify_code", type=str, required=True, location="json")
         body = parser.parse_args()
 
-        AccountService.validate_name_email_phone(body.name, body.email, body.phone)
+        # 手机号验证已注释，传入 None
+        AccountService.validate_name_email_phone(body.name, body.email, None)
         if body.password != body.confirm_password:
             raise ValueError("两次输入的密码不相同")
 
-        # 校验验证码
-        SmsChecker("register").check(body.phone, body.verify_code)
+        # 校验验证码已注释
+        # SmsChecker("register").check(body.phone, body.verify_code)
 
+        # 手机号传入空字符串
         account = RegisterService.register(
-            body.email, body.phone, body.name, password=body.password
+            body.email, "", body.name, password=body.password
         )
         TenantService.create_private_tenant(account)
 

@@ -184,12 +184,13 @@ const Register_phone = () => {
           }
         />
       </Form.Item>
-      <Form.Item
+      {/* 手机号和验证码字段已注释 */}
+      {/* <Form.Item
         name="phone"
         validateTrigger="onSubmit"
         rules={[
           {
-
+            
             pattern: /^1[3-9]\d{9}$/,
             message: '请输入正确的手机号码',
           },
@@ -227,7 +228,7 @@ const Register_phone = () => {
         validateStatus={verificationKeyError ? 'error' : undefined}
         help={verificationKeyError || undefined}
         onChange={() => verificationKeyError && setVerificationKeyError(null)}
-      />
+      /> */}
       <Form.Item>
         <Button style={{ height: 40 }} loading={loading} className="submit_btn" type="primary" htmlType="submit" block>
           注册
