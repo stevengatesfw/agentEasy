@@ -910,11 +910,30 @@ class InferService:
         """
         ams_start_server_url = os.getenv("AMS_ENDPOINT") + "/v1/inference_services"
         logging.info(
-            f"ams_start_service: {ams_start_server_url}, {service_name}, {model_name}"
+            f"ams_start_service: {ams_start_server_url}, {service_name}, model_name='{model_name}'"
         )
+        logging.info(
+            f"ams_start_service: 输入参数 - service_name='{service_name}', "
+            f"model_name='{model_name}', supplier='{self.supplier}'"
+        )
+        
         if self.supplier == "lazyllm":
+            original_model_name = model_name
             model_name = model_name.split(":")[-1]
-        json_data = {"service_name": service_name, "model_name": model_name}  # list
+            logging.info(
+                f"ams_start_service: split 处理 - 原始='{original_model_name}', "
+                f"处理后='{model_name}'"
+            )
+            if not model_name:
+                logging.error(
+                    f"ams_start_service: 错误！处理后的 model_name 为空字符串！"
+                    f"原始值='{original_model_name}'"
+                )
+        
+        json_data = {"service_name": service_name, "model_name": model_name}
+        logging.info(
+            f"ams_start_service: 准备发送 JSON 数据 - {json_data}"
+        )
         try:
             response = requests.post(ams_start_server_url, json=json_data, timeout=10)
         except requests.exceptions.RequestException as e:
@@ -980,9 +999,22 @@ class InferService:
                 self.check_gpu_quota(service.tenant_id)
 
             model_info = Lazymodel.query.get(service.model_id)
+            if not model_info:
+                raise ValueError(f"模型不存在，model_id={service.model_id}")
+            
+            logging.info(
+                f"start_service: service_id={service_id}, service_name={service.name}, "
+                f"model_id={service.model_id}, model_info.model_name='{model_info.model_name}', "
+                f"model_info.model_from='{model_info.model_from}', model_info.model_key='{model_info.model_key}'"
+            )
 
             infer_model_name = model_info.model_name
             if model_info.model_from == "finetune":
+                model_key_ams = getattr(model_info, 'model_key_ams', None)
+                logging.info(
+                    f"start_service: 微调模型，model_key_ams='{model_key_ams}', "
+                    f"model_name='{model_info.model_name}'"
+                )
                 if model_info.model_key_ams not in [
                     model["model_name"] for model in ams_local_model_list_ams
                 ]:
@@ -990,6 +1022,15 @@ class InferService:
                 infer_model_name = (
                     model_info.model_key_ams + ":" + model_info.model_name
                 )
+                logging.info(f"start_service: 拼接后的 infer_model_name='{infer_model_name}'")
+            elif model_info.model_from == "modelscope":
+                # 对于 modelscope 类型的模型，使用 model_key（包含命名空间路径）
+                infer_model_name = model_info.model_key
+                logging.info(
+                    f"start_service: modelscope 模型，使用 model_key='{infer_model_name}'"
+                )
+            
+            logging.info(f"start_service: 准备调用 ams_start_service，infer_model_name='{infer_model_name}'")
             ams_start_service_result, ams_start_service_return = self.ams_start_service(
                 service.name, infer_model_name
             )
