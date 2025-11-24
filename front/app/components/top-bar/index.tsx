@@ -93,14 +93,15 @@ const Header = () => {
       <div>
         <SelectUserGroup />
       </div>
-      <div
+      {/* 帮助文档功能已暂时禁用 */}
+      {/* <div
         className={`${style.iconWrap}`}
         onClick={() => { navigationRouter.push('/docCenter') }}
       >
         <Tooltip title="帮助文档">
           <Iconfont type='icon-bangzhuwendang' />
         </Tooltip>
-      </div>
+      </div> */}
       <div
         className={`${style.iconWrap}`}
         onClick={() => { oepnProgressMonitor({ title: '上传/下载进度' }) }}
