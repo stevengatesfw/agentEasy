@@ -33,6 +33,7 @@ from parts.data.builtin_common_datasets import BUILTIN_COMMON_DATASETS
 from parts.data.builtin_common_scripts import BUILTIN_COMMON_SCRIPTS
 from parts.data.data_service import DataService
 from parts.data.script_service import ScriptService
+from parts.data.script_model import Script
 from parts.models_hub.model import Lazymodel
 from parts.models_hub.model_list import (ams_model_list, firms,
                                          online_model_list)
@@ -704,6 +705,76 @@ def init_scripts():
     )
 
 
+# 删除内置脚本。
+# 此命令仅用于开发环境下测试内置脚本的初始化功能。
+# 不可用于其他用途。
+@click.command(
+    "delete-scripts", help="删除不在当前定义列表中的内置脚本"
+)
+@click.option("--force", is_flag=True, help="强制删除，不进行确认")
+def delete_scripts(force):
+    """删除不在当前定义列表中的内置脚本"""
+    click.echo("Preparing to delete built-in scripts...")
+
+    # 获取管理员账户
+    admin_account = AccountService.load_user(user_id=Account.get_administrator_id())
+
+    # 获取所有内置脚本
+    scripts = Script.query.filter_by(user_id=admin_account.id).all()
+
+    if not scripts:
+        click.echo(click.style("No built-in scripts found.", fg="yellow"))
+        return
+
+    # 获取当前定义的内置脚本名称列表
+    current_script_names = {script_meta["name"] for script_meta in BUILTIN_COMMON_SCRIPTS}
+
+    # 筛选出需要删除的脚本（不在当前定义列表中的）
+    scripts_to_delete = [s for s in scripts if s.name not in current_script_names]
+
+    if not scripts_to_delete:
+        click.echo(click.style("All built-in scripts are in the current definition list.", fg="yellow"))
+        return
+
+    if not force:
+        click.echo(click.style(f"\nFound {len(scripts_to_delete)} built-in scripts to delete:", fg="blue"))
+        for script in scripts_to_delete:
+            click.echo(f"  - {script.name}")
+        if not click.confirm("\nDo you want to continue?"):
+            click.echo(click.style("Deletion cancelled.", fg="yellow"))
+            return
+
+    # 删除脚本
+    deleted_count = 0
+    error_count = 0
+    for script in scripts_to_delete:
+        try:
+            # 删除标签绑定
+            Tag.delete_bindings(Tag.Types.SCRIPT, script.id)
+            # 删除脚本
+            db.session.delete(script)
+            db.session.commit()
+            click.echo(
+                click.style(f"Deleted built-in script: {script.name}", fg="green")
+            )
+            deleted_count += 1
+        except Exception as e:
+            click.echo(
+                click.style(
+                    f"Failed to delete built-in script {script.name}: {str(e)}",
+                    fg="red",
+                )
+            )
+            db.session.rollback()
+            error_count += 1
+
+    click.echo(click.style(f"\nDeletion Summary:", fg="blue"))
+    click.echo(click.style(f"Successfully deleted: {deleted_count}", fg="green"))
+    if error_count > 0:
+        click.echo(click.style(f"Errors: {error_count}", fg="red"))
+    click.echo(click.style("Built-in scripts deletion completed!", fg="green"))
+
+
 @click.command("init-ams-models", help="初始化内置AMS模型")
 def init_ams_models():
     """初始化内置AMS模型清单，直接操作数据库"""
@@ -1358,6 +1429,7 @@ def register_commands(app):
     app.cli.add_command(init_ams_models)
     app.cli.add_command(delete_ams_models)
     app.cli.add_command(init_scripts)
+    app.cli.add_command(delete_scripts)
     app.cli.add_command(delete_builtin_models)
     app.cli.add_command(init_all)
     app.cli.add_command(init_db)
