@@ -567,6 +567,12 @@ class ModelService:
             raise CommonError("已经存在相同名称的模型")
 
         model_brand = data.get("model_brand")
+        # 对于本地模型，设置默认的 framework 和 endpoint
+        # 优先使用 LMDeploy + /v1/chat/interactive
+        is_local = data.get("model_type") == "local"
+        framework = data.get("framework") or ("LMDeploy" if is_local else None)
+        endpoint = data.get("endpoint") or ("/v1/chat/interactive" if is_local else None)
+        
         model = Lazymodel(
             user_id=self.account.id,
             tenant_id=self.account.current_tenant_id,
@@ -588,6 +594,8 @@ class ModelService:
             model_url=data.get("model_url") or "",
             model_dir=data.get("model_dir") or "",
             builtin_flag=(self.account.id == Account.get_administrator_id()),
+            framework=framework,  # 模型框架，本地模型默认使用 LMDeploy
+            endpoint=endpoint,  # 推理端点，本地模型默认使用 /v1/chat/interactive
         )
         if data["model_type"] == "online":
             # if self.account.id != Account.get_administrator_id():

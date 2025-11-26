@@ -1,3 +1,3 @@
 [submodule "back/LazyLLM"]
 	path = back/LazyLLM
-	url = https://github.com/stevengatesfw/LCLLM.git 
+	url = https://github.com/stevengatesfw/LCLLM.git

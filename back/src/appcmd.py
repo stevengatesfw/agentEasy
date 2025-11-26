@@ -811,6 +811,11 @@ def init_ams_models():
 
     for model_data in models_to_create:
         try:
+            # 设置默认的 framework 和 endpoint
+            is_local = model_data["model_type"] == "local"
+            framework = model_data.get("framework") or ("LMDeploy" if is_local else None)
+            endpoint = model_data.get("endpoint") or ("/v1/chat/interactive" if is_local else None)
+            
             new_model = Lazymodel(
                 model_icon="/app/upload/online.jpg",
                 model_type=model_data["model_type"],
@@ -831,6 +836,8 @@ def init_ams_models():
                 model_url="",
                 model_dir="",
                 deleted_flag=0,
+                framework=framework,
+                endpoint=endpoint,
             )
 
             db.session.add(new_model)
@@ -924,6 +931,81 @@ def delete_ams_models(force):
     click.echo(click.style(f"Successfully deleted: {deleted_count}", fg="green"))
     click.echo(click.style(f"Errors: {error_count}", fg="red"))
     click.echo(click.style("Delete built-in AMS models completed!", fg="green"))
+
+
+@click.command("delete-commented-ams-models", help="物理删除已注释的AMS模型（不在当前ams_model_list中的模型）")
+@click.option("--force", is_flag=True, help="强制删除，不进行确认")
+def delete_commented_ams_models(force):
+    """物理删除已注释的AMS模型（不在当前ams_model_list中的模型）"""
+    click.echo("Preparing to delete commented ams built-in models...")
+
+    admin_account = AccountService.load_user(user_id=Account.get_administrator_id())
+
+    # 获取当前 ams_model_list 中的模型名称
+    current_model_names = {model["name"] for model in ams_model_list}
+
+    # 查询所有内置AMS模型（包括已软删除的）
+    all_builtin_models = (
+        db.session.query(Lazymodel)
+        .filter(
+            Lazymodel.builtin_flag == True,
+            Lazymodel.tenant_id == admin_account.current_tenant_id,
+        )
+        .all()
+    )
+
+    # 筛选出需要删除的模型（不在当前 ams_model_list 中的）
+    models_to_delete = [
+        model for model in all_builtin_models
+        if model.model_name not in current_model_names
+    ]
+
+    if not models_to_delete:
+        click.echo(click.style("No commented models found to delete.", fg="yellow"))
+        return
+
+    click.echo(
+        click.style(f"\nFound {len(models_to_delete)} commented models to delete:", fg="blue")
+    )
+    for model in models_to_delete:
+        click.echo(f"  - {model.model_name} (deleted_flag={model.deleted_flag}, model_status={model.model_status})")
+
+    if not force:
+        if not click.confirm("\nAre you sure you want to PHYSICALLY DELETE these models?"):
+            click.echo(click.style("Operation cancelled.", fg="yellow"))
+            return
+
+    deleted_count = 0
+    error_count = 0
+
+    for model in models_to_delete:
+        try:
+            model_id = model.id
+            model_name = model.model_name
+
+            # 删除标签绑定
+            Tag.delete_bindings(Tag.Types.MODEL, model_id)
+
+            # 物理删除模型
+            db.session.delete(model)
+            db.session.commit()
+
+            click.echo(click.style(f"Physically deleted model: {model_name}", fg="green"))
+            deleted_count += 1
+
+        except Exception as e:
+            click.echo(
+                click.style(
+                    f"Failed to delete model {model.model_name}: {str(e)}", fg="red"
+                )
+            )
+            error_count += 1
+            db.session.rollback()
+
+    click.echo(click.style("\nDeletion Summary:", fg="blue"))
+    click.echo(click.style(f"Successfully deleted: {deleted_count}", fg="green"))
+    click.echo(click.style(f"Errors: {error_count}", fg="red"))
+    click.echo(click.style("Delete commented AMS models completed!", fg="green"))
 
 
 @click.command(
@@ -1428,6 +1510,7 @@ def register_commands(app):
     app.cli.add_command(init_datasets)
     app.cli.add_command(init_ams_models)
     app.cli.add_command(delete_ams_models)
+    app.cli.add_command(delete_commented_ams_models)
     app.cli.add_command(init_scripts)
     app.cli.add_command(delete_scripts)
     app.cli.add_command(delete_builtin_models)

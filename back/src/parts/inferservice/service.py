@@ -65,10 +65,18 @@ def get_service_info(service_id):
             if model_info.model_from == "finetune":
                 model_name = model_info.model_key_ams
                 get_service_info_res["model_name"] = model_info.model_key_ams
-            for local_ams_model in ams_local_model_list_ams:
-                if local_ams_model["model_name"] == model_name:
-                    get_service_info_res["framework"] = local_ams_model["framework"]
-                    break
+            else:
+                model_name = model_info.model_name
+            
+            # 优先从数据库读取 framework
+            if model_info.framework:
+                get_service_info_res["framework"] = model_info.framework
+            else:
+                # 如果数据库中没有 framework，从 ams_local_model_list_ams 中查找
+                for local_ams_model in ams_local_model_list_ams:
+                    if local_ams_model["model_name"] == model_name:
+                        get_service_info_res["framework"] = local_ams_model["framework"]
+                        break
 
     except Exception as e:
         logging.info(f"get_service_info failed, id: {service_id}, error: {str(e)}")
@@ -293,17 +301,34 @@ class InferService:
                     model_info = Lazymodel.query.get(service.model_id)
                     if model_info.model_from == "finetune":
                         ams_model_name = model_info.model_key_ams
-                    for local_ams_model in ams_local_model_list_ams:
-                        if local_ams_model["model_name"] == ams_model_name:
-                            if "http" in ams_get_service_status_endpoint:
-                                endpoint_url = ams_get_service_status_endpoint
-                            else:
-                                endpoint_url = (
-                                    "http://"
-                                    + ams_get_service_status_endpoint
-                                    + local_ams_model["endpoint"]
-                                )
-                            ams_service_endpoint[str(service.gid)] = endpoint_url
+                    else:
+                        ams_model_name = model_info.model_name
+                    
+                    # 优先从数据库读取 endpoint
+                    if model_info.endpoint:
+                        if "http" in ams_get_service_status_endpoint:
+                            endpoint_url = ams_get_service_status_endpoint
+                        else:
+                            endpoint_url = (
+                                "http://"
+                                + ams_get_service_status_endpoint
+                                + model_info.endpoint
+                            )
+                        ams_service_endpoint[str(service.gid)] = endpoint_url
+                    else:
+                        # 如果数据库中没有 endpoint，从 ams_local_model_list_ams 中查找
+                        for local_ams_model in ams_local_model_list_ams:
+                            if local_ams_model["model_name"] == ams_model_name:
+                                if "http" in ams_get_service_status_endpoint:
+                                    endpoint_url = ams_get_service_status_endpoint
+                                else:
+                                    endpoint_url = (
+                                        "http://"
+                                        + ams_get_service_status_endpoint
+                                        + local_ams_model["endpoint"]
+                                    )
+                                ams_service_endpoint[str(service.gid)] = endpoint_url
+                                break
         return ams_service_status, ams_service_endpoint
 
     def _process_status_filter(self, status):
@@ -569,17 +594,38 @@ class InferService:
         if not ams_get_service_status_result or not ams_get_service_status_endpoint:
             service_info_map["url"] = ""
             return service_info_map
-            
-        for local_ams_model in ams_local_model_list_ams:
-            if local_ams_model["model_name"] == service_info_map["model_name"]:
+        
+        # 从数据库读取模型信息
+        model_info = Lazymodel.query.get(service_info_map["model_id"])
+        if model_info:
+            # 优先从数据库读取 framework 和 endpoint
+            if model_info.framework:
+                service_info_map["framework"] = model_info.framework
+            if model_info.endpoint:
                 if "http" in ams_get_service_status_endpoint:
                     service_info_map["url"] = ams_get_service_status_endpoint
                 else:
                     service_info_map["url"] = (
                         "http://"
                         + ams_get_service_status_endpoint
-                        + local_ams_model["endpoint"]
+                        + model_info.endpoint
                     )
+                return service_info_map
+        
+        # 如果数据库中没有 endpoint，从 ams_local_model_list_ams 中查找
+        for local_ams_model in ams_local_model_list_ams:
+            if local_ams_model["model_name"] == service_info_map["model_name"]:
+                if not model_info or not model_info.framework:
+                    service_info_map["framework"] = local_ams_model["framework"]
+                if not model_info or not model_info.endpoint:
+                    if "http" in ams_get_service_status_endpoint:
+                        service_info_map["url"] = ams_get_service_status_endpoint
+                    else:
+                        service_info_map["url"] = (
+                            "http://"
+                            + ams_get_service_status_endpoint
+                            + local_ams_model["endpoint"]
+                        )
                 break
         return service_info_map
 
@@ -1015,10 +1061,13 @@ class InferService:
                     f"start_service: 微调模型，model_key_ams='{model_key_ams}', "
                     f"model_name='{model_info.model_name}'"
                 )
-                if model_info.model_key_ams not in [
-                    model["model_name"] for model in ams_local_model_list_ams
-                ]:
-                    raise ValueError(f"基础模型 {model_info.model_key} 不支持推理")
+                # 优先检查数据库中是否有 framework 和 endpoint 配置
+                # 如果没有，再检查是否在 ams_local_model_list_ams 中
+                if not model_info.framework or not model_info.endpoint:
+                    if model_info.model_key_ams not in [
+                        model["model_name"] for model in ams_local_model_list_ams
+                    ]:
+                        raise ValueError(f"基础模型 {model_info.model_key} 不支持推理，且未配置 framework 和 endpoint")
                 infer_model_name = (
                     model_info.model_key_ams + ":" + model_info.model_name
                 )
@@ -1029,6 +1078,25 @@ class InferService:
                 logging.info(
                     f"start_service: modelscope 模型，使用 model_key='{infer_model_name}'"
                 )
+            elif model_info.model_from in ["localModel", "huggingface", "existModel"]:
+                # 对于用户创建的本地模型，使用 model_name 或 model_path
+                # 如果配置了 framework 和 endpoint，则可以使用
+                if model_info.framework and model_info.endpoint:
+                    logging.info(
+                        f"start_service: 用户创建的本地模型，使用 model_name='{model_info.model_name}', "
+                        f"framework='{model_info.framework}', endpoint='{model_info.endpoint}'"
+                    )
+                elif model_info.model_path:
+                    # 使用 model_path 作为模型标识
+                    infer_model_name = model_info.model_path
+                    logging.info(
+                        f"start_service: 使用 model_path='{infer_model_name}'"
+                    )
+                else:
+                    logging.warning(
+                        f"start_service: 模型 {model_info.model_name} 未配置 framework/endpoint 或 model_path，"
+                        f"可能无法正常启动推理服务"
+                    )
             
             logging.info(f"start_service: 准备调用 ams_start_service，infer_model_name='{infer_model_name}'")
             ams_start_service_result, ams_start_service_return = self.ams_start_service(

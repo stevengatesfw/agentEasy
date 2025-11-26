@@ -86,15 +86,34 @@ def get_finetune_model_list(only_model_key=False):
     else:
         # 非 maas 环境：从数据库查询本地微调模型
         try:
-            local_finetune_models = (
+            # 先查询所有本地模型，然后动态判断是否可以微调
+            # 判断逻辑：
+            # 1. 如果是微调模型（is_finetune_model == True），可以微调
+            # 2. 如果是本地 LLM 模型（model_kind == "localLLM"），可以微调
+            # 3. 或者数据库字段 can_finetune_model == True
+            local_models = (
                 db.session.query(Lazymodel)
                 .filter(
                     Lazymodel.model_type == "local",
-                    Lazymodel.can_finetune_model == True,
                     Lazymodel.deleted_flag == 0
                 )
                 .all()
             )
+            
+            # 使用动态计算判断模型是否可以微调
+            local_finetune_models = []
+            for model in local_models:
+                # 判断是否可以微调：
+                # 1. 是微调模型
+                # 2. 是本地 LLM 模型
+                # 3. 或者数据库字段标记为可以微调
+                can_finetune = (
+                    model.is_finetune_model == True or
+                    (model.model_kind == "localLLM" and model.is_finetune_model != True) or
+                    model.can_finetune_model == True
+                )
+                if can_finetune:
+                    local_finetune_models.append(model)
             
             if only_model_key:
                 # 只返回模型名称列表
@@ -213,6 +232,8 @@ class Lazymodel(db.Model):
     finetune_task_id = db.Column(db.Integer, nullable=True, default=0)
     deleted_flag = db.Column(db.Integer, nullable=False, default=0)
     builtin_flag = db.Column(db.Boolean, nullable=False, default=False)
+    framework = db.Column(db.String(255), nullable=True)  # 模型框架，如 LMDeploy, SenseVoiceDeploy
+    endpoint = db.Column(db.String(255), nullable=True)  # 推理端点，如 /v1/chat/interactive, /generate
 
     @property
     def can_download(self):

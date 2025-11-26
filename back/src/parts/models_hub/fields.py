@@ -60,6 +60,8 @@ model_fields = {
     "download_message": fields.String,
     "tags": fields.List(fields.String, attribute="tags"),
     "user_name": fields.String,
+    "framework": fields.String,
+    "endpoint": fields.String,
 }
 
 model_select_fields = {

@@ -156,14 +156,24 @@ class CreateServiceGroup(Resource):
                 logging.info(f"CreateServiceGroup infer_model_name: {infer_model_name}")
                 is_finetued_model = True
 
+            # 优先检查数据库中是否有 framework 和 endpoint 配置
+            # 如果数据库中有配置，说明模型支持推理
             is_ams_support_model = False
-            for local_ams_model in ams_model_list:
-                if not is_finetued_model:
-                    if local_ams_model["model_name"] == model_name:
-                        is_ams_support_model = True
-                else:
-                    if local_ams_model["model_name"] in infer_model_name:
-                        is_ams_support_model = True
+            if model_info.framework and model_info.endpoint:
+                is_ams_support_model = True
+                logging.info(f"CreateServiceGroup: 模型 {model_name} 在数据库中有 framework 和 endpoint 配置")
+            else:
+                # 如果数据库中没有配置，回退到检查硬编码的 ams_model_list
+                for local_ams_model in ams_model_list:
+                    if not is_finetued_model:
+                        if local_ams_model["model_name"] == model_name:
+                            is_ams_support_model = True
+                            break
+                    else:
+                        if local_ams_model["model_name"] in infer_model_name:
+                            is_ams_support_model = True
+                            break
+            
             if not is_ams_support_model:
                 return build_response(status=400, message="底层暂不支持该模型推理。")
             # 将新建的服务信息以JSON格式返回

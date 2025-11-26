@@ -137,8 +137,8 @@ services:
       - ./volumes/share_data:/mnt/lustre/share_data  #模型路径
       - ../back/src:/app/src:cached  # 临时挂载源代码，用于快速测试
   web:
-    image: crpi-blsid77lj9a28n6f.cn-hangzhou.personal.cr.aliyuncs.com/lcagent/front:latest
-    # image: easyagent-front:latest
+    # image: crpi-blsid77lj9a28n6f.cn-hangzhou.personal.cr.aliyuncs.com/lcagent/front:latest
+    image: easyagent-front:latest
     restart: always
     environment:
       CONSOLE_API_URL: ''
@@ -323,7 +323,8 @@ services:
       LAZYLLM_TRAIN_TARGET_ROOT: /mnt/lustre/share_data/finetune_models
     entrypoint: >
       /bin/bash -lc "
-        source activate lazyllm &&
+        pip install prometheus_client &&
+        pip install vllm &&
         python -c 'import lazyllm; from lazyllm.tools.infer_service.serve import InferServer; from lazyllm.tools.train_service.serve import TrainServer; inference_service = lazyllm.ServerModule(InferServer(), port=\"31340\", launcher=lazyllm.launcher.EmptyLauncher(sync=False, ngpus=0)); inference_service.start()(); train_service = lazyllm.ServerModule(TrainServer(), port=\"31341\", launcher=lazyllm.launcher.EmptyLauncher(sync=False, ngpus=0)); train_service.start()(); inference_service.wait(); train_service.wait()' &&
         tail -f /dev/null
       "

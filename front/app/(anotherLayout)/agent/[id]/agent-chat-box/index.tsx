@@ -16,8 +16,8 @@ import BytesPreview from '@/app/components/taskStream/elements/_foundation/compo
 import HoverGuide from '@/app/components/base/hover-tip-pro'
 import Icon from '@/app/components/base/iconFont'
 import MarkdownRenderer from '@/app/components/base/markdown-renderer'
-import AnswerIcon from '@/public/logo/logo-site.png'
-import RobotDefaultIcon from '@/public/logo/logo-site.png'
+import AnswerIcon from '@/public/logo/logo2small.png'
+import RobotDefaultIcon from '@/public/logo/logo2small.png'
 
 const AgentChatBox = ({ agentId, sidebar, draft, currentChatId, onChatIdChange }: {
   agentId?: string
@@ -89,7 +89,27 @@ const AgentChatBox = ({ agentId, sidebar, draft, currentChatId, onChatIdChange }
     if (detailData.chatId && !detailData.isStreaming) {
       getChatDetail({ url: `conversation/${agentId}/history`, options: { params: { sessionid: detailData.chatId } } }).then((res) => {
         const resList = res?.data || []
-        setChatList(resList)
+        // 智能合并：如果服务器返回的消息数量少于当前 chatList，说明服务器还没保存完整
+        // 此时保留本地 chatList，不覆盖
+        setChatList(prevChatList => {
+          // 如果服务器返回的消息数量少于本地，且本地有消息，说明服务器数据不完整
+          if (resList.length < prevChatList.length && prevChatList.length > 0) {
+            // 检查最后一条消息是否是AI消息且有内容
+            const lastLocalMsg = prevChatList[prevChatList.length - 1]
+            const lastServerMsg = resList[resList.length - 1]
+            
+            // 如果本地最后一条是AI消息且有内容，而服务器没有或内容为空，保留本地
+            if (lastLocalMsg && lastLocalMsg.from_who === 'lazyllm' && lastLocalMsg.content) {
+              if (!lastServerMsg || lastServerMsg.from_who !== 'lazyllm' || !lastServerMsg.content) {
+                // 服务器数据不完整，保留本地状态
+                return prevChatList
+              }
+            }
+          }
+          
+          // 服务器数据完整，使用服务器数据
+          return resList
+        })
       })
     }
   }, [detailData.chatId, detailData.isStreaming, agentId, refreshHistoryTag])
@@ -112,6 +132,17 @@ const AgentChatBox = ({ agentId, sidebar, draft, currentChatId, onChatIdChange }
   const inputChange = (e) => {
     setQuestionText(e.target.value);
     (document.getElementById('agentTextArea') as HTMLElement).scrollTop = 99999
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // 按 Enter 键发送消息（不按 Shift）
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      if (!detailData.isStreaming && (questionText || fileUrl)) {
+        sendQuestion()
+      }
+    }
+    // Shift + Enter 换行（默认行为，不需要处理）
   }
 
   const handleErrorModalClose = () => {
@@ -199,8 +230,9 @@ const AgentChatBox = ({ agentId, sidebar, draft, currentChatId, onChatIdChange }
               }).join('\\n')
             }
 
-            setChatList([
-              ...chatList.map(item => ({
+            // 使用函数式更新，避免闭包问题
+            setChatList(prevChatList => [
+              ...prevChatList.map(item => ({
                 ...item,
                 content: item.content ? processContent(item.content) : item.content,
               })),
@@ -309,7 +341,7 @@ const AgentChatBox = ({ agentId, sidebar, draft, currentChatId, onChatIdChange }
                         <Image src={RobotDefaultIcon} alt="" />
                       </div>
                       <div className={styles.defaultText}>
-                        我今天能帮你做什么？
+                        您好，我是您的专属客服，很高兴为您服务！
                       </div>
                     </div>
                   </div>
@@ -387,6 +419,7 @@ const AgentChatBox = ({ agentId, sidebar, draft, currentChatId, onChatIdChange }
                 placeholder='请输入您的问题'
                 value={questionText}
                 onChange={inputChange}
+                onKeyDown={handleKeyDown}
                 id='agentTextArea'
               />
               <div className={styles.agentOperate}>
@@ -407,7 +440,7 @@ const AgentChatBox = ({ agentId, sidebar, draft, currentChatId, onChatIdChange }
                 </div>
                 <div onClick={sendQuestion} className={`${styles.operateBtn} ${detailData.isStreaming ? styles.operateDisabled : ''}`} id="sendBtnEle">
                   <HoverGuide
-                    popupContent={'按 Ctrl + Enter 快捷发送'}
+                    popupContent={'按 Enter 发送，Shift + Enter 换行'}
                   >
                     <Icon type="icon-fasong" style={{ fontSize: '22px', color: '#262626' }} />
                   </HoverGuide>

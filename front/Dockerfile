@@ -52,6 +52,8 @@ COPY --from=builder /app/web/.next/static ./.next/static
 
 COPY docker/pm2.json ./pm2.json
 COPY docker/entrypoint.sh ./entrypoint.sh
+# 转换 Windows CRLF 行尾符为 Linux LF (Alpine sed 需要提供备份扩展名)
+RUN sed -i.bak 's/\r$//' ./entrypoint.sh && rm -f ./entrypoint.sh.bak && chmod +x ./entrypoint.sh
 
 EXPOSE 8088
 ENTRYPOINT ["/bin/sh", "./entrypoint.sh"]

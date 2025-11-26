@@ -135,6 +135,8 @@ class modelCreateApi(Resource):
         parser.add_argument("model_list", type=str, location="json", required=False)
         parser.add_argument("model_dir", type=str, location="json", required=False)
         parser.add_argument("tag_names", type=list, location="json", required=False)
+        parser.add_argument("framework", type=str, location="json", required=False)
+        parser.add_argument("endpoint", type=str, location="json", required=False)
         data = parser.parse_args()
         self.check_can_write()
 
