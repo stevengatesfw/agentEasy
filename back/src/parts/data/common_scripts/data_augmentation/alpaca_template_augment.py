@@ -1,18 +1,3 @@
-# Copyright (c) 2025 SenseTime. All Rights Reserved.
-# Author: LazyLLM Team,  https://github.com/LazyAGI/LazyLLM
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 """数据增强 —— 任务模板改写：
 - 根据任务类型，对 instruction 使用多种自然语言模板进行格式化重写
 - 增强样本表达方式多样性，适用于 Alpaca 格式数据增强

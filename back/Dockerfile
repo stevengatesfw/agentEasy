@@ -74,7 +74,8 @@ COPY src/docker/entrypoint.sh /entrypoint.sh
 COPY requirements.txt /tmp/requirements.txt
 COPY scoamp-0.6.9-py3-none-any.whl /tmp/
 
-RUN chmod +x /entrypoint.sh 
+# 转换 Windows CRLF 行尾符为 Linux LF (Debian sed 可以直接使用 -i 选项)
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh 
 
 # 安装Python依赖
 RUN pip install --no-cache-dir -r /tmp/requirements.txt \

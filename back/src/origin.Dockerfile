@@ -59,7 +59,8 @@ COPY . /app/api/
 
 # Copy entrypoint
 COPY docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# 转换 Windows CRLF 行尾符为 Linux LF (Debian sed 可以直接使用 -i 选项)
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 
 ARG BUILD_VERSION

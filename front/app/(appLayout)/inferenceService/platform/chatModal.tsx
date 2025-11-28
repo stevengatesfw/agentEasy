@@ -26,6 +26,18 @@ const ChatModal = (props: any) => {
     setQuestionText(e.target.value);
     (document.getElementById('agentTextArea') as HTMLElement).scrollTop = 99999
   }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // 按 Enter 键发送消息（不按 Shift）
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      if (!detailData.isStreaming && (questionText || fileUrl)) {
+        sendQuestion()
+      }
+    }
+    // Shift + Enter 换行（默认行为，不需要处理）
+  }
+
   const updateAnswer = ({ userQuestion }) => {
     selfRef.current.streamSegment = [
       { content: userQuestion, from_who: 'user' },
@@ -165,7 +177,7 @@ const ChatModal = (props: any) => {
                                 </div>}
                             </div>
                             <div className={styles.chatContent}>
-                              <div className={styles.chatRole}>{isLazyllm ? 'Sensetime' : 'You'}</div>
+                              <div className={styles.chatRole}>{isLazyllm ? 'LCAgent' : 'You'}</div>
                               <div className={styles.chatWord}>
                                 {((showLogic && isLazyllm && index === chatList.length - 1) || item.__useStream)
                                   ? (detailData?.result
@@ -209,6 +221,7 @@ const ChatModal = (props: any) => {
                   placeholder='请输入您的问题'
                   value={questionText}
                   onChange={inputChange}
+                  onKeyDown={handleKeyDown}
                   id='agentTextArea'
                 />
                 <div className={styles.agentOperate}>
@@ -227,7 +240,7 @@ const ChatModal = (props: any) => {
                   </div>
                   <div onClick={sendQuestion} className={`${styles.operateBtn} ${detailData.isStreaming ? styles.operateDisabled : ''}`} id="sendBtnEle">
                     <HoverGuide
-                      popupContent={'按 Ctrl + Enter 快捷发送'}
+                      popupContent={'按 Enter 或 Ctrl + Enter 快捷发送，Shift + Enter 换行'}
                     >
                       <Icon type="icon-fasong" style={{ fontSize: '22px', color: '#262626' }} />
                     </HoverGuide>

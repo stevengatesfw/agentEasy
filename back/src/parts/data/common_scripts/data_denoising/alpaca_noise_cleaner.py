@@ -1,18 +1,3 @@
-# Copyright (c) 2025 SenseTime. All Rights Reserved.
-# Author: LazyLLM Team,  https://github.com/LazyAGI/LazyLLM
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 """数据去噪：
 - 移除或修正文本数据中的错字、乱码、重复内容、无意义符号、低质量表达等干扰项
 - 提高 instruction / input / output 字段的语义清晰度和可用性，增强数据质量

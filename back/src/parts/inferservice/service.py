@@ -1,18 +1,3 @@
-# Copyright (c) 2025 SenseTime. All Rights Reserved.
-# Author: LazyLLM Team,  https://github.com/LazyAGI/LazyLLM
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import logging
 import os
 import time
@@ -51,7 +36,7 @@ def get_service_info(service_id):
     service = InferModelService.query.get(service_id)
     get_service_info_res = {}
     try:
-        if service.gid:
+        if service and service.gid:
             group_id = service.group_id
             group_info = InferModelServiceGroup.query.get(group_id)
             model_name = group_info.model_name
@@ -61,12 +46,20 @@ def get_service_info(service_id):
             service_name_ams = service.gid
             get_service_info_res["service_name_ams"] = service_name_ams
 
+            # Add model_id to the result dictionary
+            get_service_info_res["model_id"] = service.model_id
             model_info = Lazymodel.query.get(service.model_id)
             if model_info.model_from == "finetune":
                 model_name = model_info.model_key_ams
                 get_service_info_res["model_name"] = model_info.model_key_ams
+            elif model_info.model_from in ["huggingface", "modelscope"]:
+                # 对于 huggingface 和 modelscope 类型的模型，使用 model_key（包含完整路径）
+                # 例如：WeiboAI/VibeThinker-1.5B 而不是 VibeThinker-1.5B
+                model_name = model_info.model_key if model_info.model_key else model_info.model_name
+                get_service_info_res["model_name"] = model_name
             else:
                 model_name = model_info.model_name
+                get_service_info_res["model_name"] = model_name
             
             # 优先从数据库读取 framework
             if model_info.framework:
