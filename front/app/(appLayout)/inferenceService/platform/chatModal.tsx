@@ -177,7 +177,7 @@ const ChatModal = (props: any) => {
                                 </div>}
                             </div>
                             <div className={styles.chatContent}>
-                              <div className={styles.chatRole}>{isLazyllm ? 'LCAgent' : 'You'}</div>
+                              <div className={styles.chatRole}>{isLazyllm ? 'LCAgent' : '您'}</div>
                               <div className={styles.chatWord}>
                                 {((showLogic && isLazyllm && index === chatList.length - 1) || item.__useStream)
                                   ? (detailData?.result
