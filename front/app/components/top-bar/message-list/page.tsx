@@ -63,7 +63,7 @@ const processTimeAgo = (dateString: string): string => {
 
 const resolveModuleDisplayName = (module: string): string => {
   const moduleNameMapping: Record<string, string> = {
-    quota_request: 'LazyLLM团队',
+    quota_request: 'LCAgent团队',
   }
 
   return moduleNameMapping[module] || '系统消息'

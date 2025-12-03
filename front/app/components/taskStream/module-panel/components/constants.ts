@@ -134,8 +134,8 @@ const commonMenuList: CommonMenuListItemType[] = [
     payload__kind: 'OnlineLLM',
     title: '大模型',
     title_en: 'LLM',
-    desc: '调用 LazyLLM 大模型，使用变量和提示词生成回复',
-    about: 'LazyLLM 大模型，可以进行推理和文本生成',
+    desc: '调用 LCAgent 大模型，使用变量和提示词生成回复',
+    about: 'LCAgent 大模型，可以进行推理和文本生成',
     categorization: BlockClassificationEnum.BasicModel,
   },
   {
@@ -205,7 +205,7 @@ const commonMenuList: CommonMenuListItemType[] = [
     payload__kind: 'FunctionCall',
     title: '工具调用智能体',
     title_en: 'FunctionCall',
-    desc: '使用 LazyLLM 大模型调用工具',
+    desc: '使用 LCAgent 大模型调用工具',
     about: '工具调用模块',
     categorization: BlockClassificationEnum.FunctionModule,
   },
@@ -216,7 +216,7 @@ const commonMenuList: CommonMenuListItemType[] = [
     title: '数据库调用智能体',
     title_en: 'SqlCall',
     desc: '将输入的自然语言转换成sql语句，执行后返回结果，帮你用日常语言查询和操作数据库',
-    about: '数据库调用模块，应用的开发者描述数据库的字段，LazyLLM 根据用户输入，转变成sql语句，然后查找数据库',
+    about: '数据库调用模块，应用的开发者描述数据库的字段，LCAgent 根据用户输入，转变成sql语句，然后查找数据库',
     categorization: BlockClassificationEnum.FunctionModule,
   },
   {
@@ -316,7 +316,7 @@ const commonMenuList: CommonMenuListItemType[] = [
     payload__kind: 'ParameterExtractor',
     title: '参数提取',
     title_en: 'ParameterExtractor',
-    desc: '利用 LazyLLM 从自然语言内推理提取出结构化参数，用于后置的工具调用或 HTTP 请求',
+    desc: '利用 LCAgent 从自然语言内推理提取出结构化参数，用于后置的工具调用或 HTTP 请求',
     categorization: BlockClassificationEnum.FunctionModule,
   },
 ]

@@ -25,8 +25,8 @@ export const viewport: viewport = {
  * 应用元数据配置
  */
 export const metadata = {
-  description: 'LazyLLM 是一个强大的AI应用开发和部署平台',
-  title: 'LazyLLM - 智能AI应用平台',
+  description: 'LCAgent 是一个强大的AI应用开发和部署平台',
+  title: 'LCAgent - 智能AI应用平台',
 }
 
 /**

@@ -15,7 +15,7 @@ const UserAgreementContent: React.FC<UserAgreementContentProps> = ({ onScroll })
     onScroll={onScroll}
   >
     <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', textAlign: 'center' }}>
-      LazyLLM 大装置平台用户协议
+      LCAgent 大装置平台用户协议
     </h3>
 
     {/* 重要提示警告框 */}
@@ -76,7 +76,7 @@ const UserAgreementContent: React.FC<UserAgreementContentProps> = ({ onScroll })
     {/* 协议条款 */}
     <h4 style={{ fontSize: '16px', fontWeight: 'bold', marginTop: '24px', marginBottom: '12px' }}>一、平台介绍</h4>
     <p style={{ marginBottom: '12px' }}>
-      LazyLLM 是一个强大的大模型智能共生平台，提供模型训练、推理服务、数据管理等一站式解决方案。本协议是您与平台之间的法律协议，请仔细阅读。
+      LCAgent 是一个强大的大模型智能共生平台，提供模型训练、推理服务、数据管理等一站式解决方案。本协议是您与平台之间的法律协议，请仔细阅读。
     </p>
 
     <h4 style={{ fontSize: '16px', fontWeight: 'bold', marginTop: '20px', marginBottom: '12px' }}>二、服务说明</h4>

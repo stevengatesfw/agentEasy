@@ -194,7 +194,7 @@ export const useLazyLLMExport = () => {
       downloadLink.click()
     }
     catch (error) {
-      notifyMessage({ type: ToastTypeEnum.Error, message: '导出 LazyLLM 配置失败' })
+      notifyMessage({ type: ToastTypeEnum.Error, message: '导出 LCAgent 配置失败' })
     }
     finally {
       setIsExporting(false)
@@ -226,7 +226,7 @@ export const useLazyLLMExport = () => {
       } as any)
     }
     catch (error) {
-      notifyMessage({ type: ToastTypeEnum.Error, message: '导出 LazyLLM 配置失败' })
+      notifyMessage({ type: ToastTypeEnum.Error, message: '导出 LCAgent 配置失败' })
     }
   }, [appDetail, emitter, executeConfigExport, notifyMessage])
 
