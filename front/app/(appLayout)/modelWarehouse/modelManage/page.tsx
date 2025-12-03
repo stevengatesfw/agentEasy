@@ -19,6 +19,7 @@ import TagMode from '@/app/components/tagSelect/TagMode'
 import useRadioAuth from '@/shared/hooks/use-radio-auth'
 import useValidateSpace from '@/shared/hooks/use-validate-space'
 import { pageCache } from '@/shared/utils'
+import { FILTER_MODEL_KINDS } from '@/infrastructure/constants/modelKinds'
 
 const TagContainer = ({ tags }) => {
   const wrapperRef = useRef(null)
@@ -197,14 +198,11 @@ const ModelWarehouse = () => {
         <Form.Item label='类别'>
           <Radio.Group style={{ marginLeft: 30 }} value={kind} onChange={onKindChange}>
             <Radio.Button value="all" style={{ marginRight: 10, borderRadius: 4 }}>全部</Radio.Button>
-            <Radio.Button value="VQA" style={{ marginRight: 10, borderRadius: 4 }}>图文理解模型</Radio.Button>
-            <Radio.Button value="SD" style={{ marginRight: 10, borderRadius: 4 }}>文生图模型</Radio.Button>
-            <Radio.Button value="TTS" style={{ marginRight: 10, borderRadius: 4 }}>文字转语音模型</Radio.Button>
-            <Radio.Button value="STT" style={{ marginRight: 10, borderRadius: 4 }}>语音转文字模型</Radio.Button>
-            <Radio.Button value="Embedding" style={{ marginRight: 10, borderRadius: 4 }}>向量模型</Radio.Button>
-            <Radio.Button value="localLLM" style={{ marginRight: 10, borderRadius: 4 }}>大模型</Radio.Button>
-            <Radio.Button value="reranker" style={{ marginRight: 10, borderRadius: 4 }}>重排模型</Radio.Button>
-            <Radio.Button value="OCR" style={{ marginRight: 10, borderRadius: 4 }}>文字识别</Radio.Button>
+            {FILTER_MODEL_KINDS.map(item => (
+              <Radio.Button key={item.value} value={item.value} style={{ marginRight: 10, borderRadius: 4 }}>
+                {item.label}模型
+              </Radio.Button>
+            ))}
           </Radio.Group>
         </Form.Item>
         <div>

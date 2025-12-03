@@ -19,6 +19,7 @@ model_kinds = {
     "SD": "文生图",
     "TTS": "文字转语音",
     "STT": "语音转文字",
+    "OCR": "文字识别",
 }
 # 模型仓库卡片类别
 model_card_kinds = {
@@ -30,6 +31,7 @@ model_card_kinds = {
     "SD": "文生图（SD）",
     "TTS": "文字转语音（TTS）",
     "STT": "语音转文字（STT）",
+    "OCR": "文字识别（OCR）",
 }
 
 # local_finetune_model_list = [

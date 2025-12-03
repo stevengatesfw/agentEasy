@@ -10,6 +10,7 @@ import CreatorSelect from '@/app/components/tagSelect/creatorSelect'
 import useRadioAuth from '@/shared/hooks/use-radio-auth'
 import Toast from '@/app/components/base/flash-notice'
 import { createPrompt, deletePrompt, getAdjustList, getPromptList } from '@/infrastructure/api/prompt'
+import { INFERENCE_MODEL_KINDS } from '@/infrastructure/constants/modelKinds'
 
 const { Panel } = Collapse
 const showText: any = {
@@ -446,7 +447,7 @@ const InferenceService = () => {
                 rules={[{ required: true, message: '请选择模型类型' }]}
                 initialValue='localLLM'
               >
-                <Select disabled={isEdit} onChange={onTypeUpdate} style={{ width: '80%' }} placeholder='请选择模型类型' options={[{ label: '大模型', value: 'localLLM' }, { label: '向量模型', value: 'Embedding' }, { label: '文字转语音', value: 'TTS' }, { label: '语音转文字', value: 'STT' }, { label: '重排序', value: 'reranker' }, { label: '视觉问答', value: 'VQA' }, { label: '文字识别', value: 'OCR' }]} />
+                <Select disabled={isEdit} onChange={onTypeUpdate} style={{ width: '80%' }} placeholder='请选择模型类型' options={INFERENCE_MODEL_KINDS.map(item => ({ ...item }))} />
               </Form.Item>
               {isEdit
                 ? <Form.Item

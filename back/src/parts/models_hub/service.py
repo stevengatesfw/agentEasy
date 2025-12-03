@@ -524,6 +524,31 @@ class ModelService:
         db.session.commit()
         return "API key 已清除"
 
+    def _get_framework_and_endpoint_by_model_kind(self, model_kind):
+        """根据 model_kind 自动获取 framework 和 endpoint。
+
+        Args:
+            model_kind (str): 模型类别，如 localLLM, VQA, TTS, STT, Embedding, reranker, OCR 等。
+
+        Returns:
+            tuple: (framework, endpoint) 元组，如果未找到对应关系则返回默认值。
+        """
+        # model_kind 到 (framework, endpoint) 的映射关系
+        framework_endpoint_map = {
+            "localLLM": ("LMDeploy", "/v1/chat/interactive"),
+            "VQA": ("LMDeploy", "/v1/chat/interactive"),
+            "TTS": ("ChatTTSDeploy", "/generate"),
+            "STT": ("SenseVoiceDeploy", "/generate"),
+            "Embedding": ("EmbeddingDeploy", "/generate"),
+            "reranker": ("RerankerDeploy", "/generate"),
+            "OCR": ("OCRDeploy", "/generate"),
+            "SD": ("StableDiffusionDeploy", "/generate"),
+        }
+        
+        # 如果找到对应的映射，返回对应的 framework 和 endpoint
+        # 否则返回默认值（LMDeploy + /v1/chat/interactive）
+        return framework_endpoint_map.get(model_kind, ("LMDeploy", "/v1/chat/interactive"))
+
     def create_model(self, data):
         """创建模型。
 
@@ -552,11 +577,26 @@ class ModelService:
             raise CommonError("已经存在相同名称的模型")
 
         model_brand = data.get("model_brand")
-        # 对于本地模型，设置默认的 framework 和 endpoint
-        # 优先使用 LMDeploy + /v1/chat/interactive
+        # 对于本地模型，根据 model_kind 自动设置默认的 framework 和 endpoint
         is_local = data.get("model_type") == "local"
-        framework = data.get("framework") or ("LMDeploy" if is_local else None)
-        endpoint = data.get("endpoint") or ("/v1/chat/interactive" if is_local else None)
+        model_kind = data.get("model_kind")
+        
+        # 优先使用用户指定的 framework 和 endpoint
+        user_framework = data.get("framework")
+        user_endpoint = data.get("endpoint")
+        
+        if is_local:
+            # 如果用户没有指定 framework 和 endpoint，且提供了 model_kind，则根据 model_kind 自动选择
+            if not user_framework and not user_endpoint and model_kind:
+                framework, endpoint = self._get_framework_and_endpoint_by_model_kind(model_kind)
+            else:
+                # 使用用户指定的值，如果未指定则使用默认值
+                framework = user_framework or "LMDeploy"
+                endpoint = user_endpoint or "/v1/chat/interactive"
+        else:
+            # 在线模型不需要 framework 和 endpoint
+            framework = user_framework
+            endpoint = user_endpoint
         
         model = Lazymodel(
             user_id=self.account.id,

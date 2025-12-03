@@ -17,6 +17,7 @@ import { bindTags, deleteFile, getTagList } from '@/infrastructure/api/tagManage
 import { useModalContext } from '@/shared/hooks/modal-context'
 import Iconfont from '@/app/components/base/iconFont'
 import IconModal from '@/app/components/iconModal'
+import { LOCAL_MODEL_KINDS, ONLINE_MODEL_KINDS } from '@/infrastructure/constants/modelKinds'
 const MAX_CONCURRENT_UPLOADS = 5 // 设置最大并发数
 type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0]
 const { Dragger } = Upload
@@ -644,16 +645,7 @@ const CreateModal = (props: any) => {
               >
                 <Select
                   placeholder='请选择模型类别'
-                  options={[
-                    { value: 'VQA', label: '视觉问答' },
-                    { value: 'SD', label: '文生图' },
-                    { value: 'TTS', label: '语音转文字' },
-                    { value: 'STT', label: '文字转语音' },
-                    { value: 'Embedding', label: '向量模型' },
-                    { value: 'localLLM', label: '大模型' },
-                    { value: 'reranker', label: '重排模型' },
-                    { value: 'OCR', label: '文字识别' },
-                  ]}
+                  options={LOCAL_MODEL_KINDS}
                 />
               </Form.Item>
               <Form.Item
@@ -746,11 +738,7 @@ const CreateModal = (props: any) => {
                 <Select
                   placeholder='请选择模型类别'
                   onChange={kindChange}
-                  options={[
-                    { value: 'OnlineLLM', label: '在线大模型' },
-                    { value: 'Embedding', label: '在线Embedding' },
-                    { value: 'reranker', label: '在线Reranker' },
-                  ]}
+                  options={ONLINE_MODEL_KINDS}
                 />
               </Form.Item>
               <Form.Item
