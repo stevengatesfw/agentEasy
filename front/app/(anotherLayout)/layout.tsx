@@ -40,7 +40,7 @@ const AnotherLayout = ({ children }: AnotherLayoutProps) => {
 }
 
 export const metadata = {
-  title: 'LazyLLM',
+  title: 'LCAgent',
 }
 
 export default AnotherLayout
