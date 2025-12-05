@@ -97,7 +97,7 @@ docker compose up -d
 ```bash
 http://127.0.0.1:30382
 默认账号：admin
-默认密码：LazyCraft@2025
+默认密码：EIT@2025
 ```
 
 ### 4. 注意事项

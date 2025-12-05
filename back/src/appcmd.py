@@ -100,7 +100,7 @@ def upgrade_db():
 
 @click.command("init", help="Init account and tenant.")
 def init():
-    password = "LazyCraft@2025"
+    password = "EIT@2025"
     TenantService.init(password)
 
     click.echo(
