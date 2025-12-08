@@ -20,6 +20,7 @@ import {
   urlPrefix,
 } from './utils'
 import style from './style.module.scss'
+import './tech-style.css'
 import DefaultLogo from './app-default-logo.png'
 import AppTemplate from './app-template'
 import ApiKeyModel from './apiKeyModel'
@@ -699,7 +700,15 @@ const Apps = () => {
             items: appCreateItems,
             onClick: handleMenuClick,
           }}>
-            <Button type="primary">
+            <Button 
+              type="primary"
+              style={{
+                background: 'linear-gradient(135deg, #0D3B66 0%, #00D4FF 100%)',
+                border: 'none',
+                boxShadow: '0 0 10px rgba(0, 212, 255, 0.5)',
+                textShadow: '0 0 8px rgba(0, 212, 255, 0.7)',
+              }}
+            >
               <Space>
                 新建智能体
                 <DownOutlined />
@@ -708,35 +717,66 @@ const Apps = () => {
           </Dropdown>
         </PermitCheck>
       </div>
-      <div className='flex justify-between'>
-        <Form.Item label="其他选项" name="is_published">
+      <div className='flex justify-between' style={{ 
+        background: 'rgba(26, 31, 54, 0.7)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(0, 212, 255, 0.3)',
+        borderRadius: '12px',
+        padding: '16px',
+        marginTop: '16px',
+        marginBottom: '16px',
+      }}>
+        <Form.Item label="其他选项" name="is_published" style={{ marginBottom: 0 }}>
           <Select
             allowClear
             placeholder="发布状态"
             onChange={onPubChange}
             value={isPublished}
-            style={{ width: 150, marginRight: 10 }}
+            style={{ 
+              width: 150, 
+              marginRight: 10,
+              background: 'rgba(45, 55, 72, 0.8)',
+            }}
             options={[{ label: '已发布', value: true }, { label: '未发布', value: false }]}
+            popupClassName="tech-select-dropdown"
           />
           <Select
             allowClear
             placeholder="应用状态"
             onChange={onStaChange}
-            style={{ width: 150, marginRight: 10 }}
+            style={{ 
+              width: 150, 
+              marginRight: 10,
+              background: 'rgba(45, 55, 72, 0.8)',
+            }}
             options={[{ label: '已启用', value: true }, { label: '未启用', value: false }]}
+            popupClassName="tech-select-dropdown"
           />
         </Form.Item>
         <Input.Search
           placeholder='请输入搜索内容'
           onSearch={onSearch}
           allowClear
-          style={{ width: 240, marginLeft: 10 }}
+          style={{ 
+            width: 240, 
+            marginLeft: 10,
+            background: 'rgba(45, 55, 72, 0.8)',
+          }}
+          className="tech-search-input"
         />
       </div>
       <Spin spinning={appLoading}>
         {(appData && !isEmpty(appData))
           ? ((appData.data?.length === 0)
-            ? <Empty className='pt-[150px]' description={searchName ? '未找到相关内容' : '暂无数据'} image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            ? <Empty 
+                className='pt-[150px]' 
+                description={
+                  <span style={{ color: '#CBD5E0' }}>
+                    {searchName ? '未找到相关内容' : '暂无数据'}
+                  </span>
+                } 
+                image={Empty.PRESENTED_IMAGE_SIMPLE} 
+              />
             : <div className={style.scrollWrap} id='scrollableDiv'>
               <InfiniteScroll
                 scrollThreshold={0.3}
@@ -767,7 +807,16 @@ const Apps = () => {
                       <Col flex="auto">
                         <Row gutter={7}>
                           <Col span={18}>
-                            <Paragraph style={{ lineHeight: '42px', marginBottom: 0 }} ellipsis title={item.name}>
+                            <Paragraph 
+                              style={{ 
+                                lineHeight: '42px', 
+                                marginBottom: 0,
+                                color: '#FFFFFF',
+                                textShadow: '0 0 8px rgba(0, 212, 255, 0.5)',
+                              }} 
+                              ellipsis 
+                              title={item.name}
+                            >
                               {item.name}
                             </Paragraph>
                           </Col>
@@ -775,17 +824,24 @@ const Apps = () => {
                             {
                               getAuthCode(item.created_by_account.id)
                               && <Tooltip title={`${item.enable_api ? '关闭' : '启动'}服务`}>
-                                <Switch className='mr-4' onChange={debounce(e => onEnableApi(e, item), 500)} checked={item.enable_api} />
+                                <Switch 
+                                  className='mr-4' 
+                                  onChange={debounce(e => onEnableApi(e, item), 500)} 
+                                  checked={item.enable_api}
+                                  style={{
+                                    background: item.enable_api ? 'rgba(0, 212, 255, 0.3)' : 'rgba(74, 85, 104, 0.5)',
+                                  }}
+                                />
                               </Tooltip>
                             }
                           </Col>
                         </Row>
                       </Col>
                     </Row>
-                    <div className='text-[#5E6472] text-sm'>
+                    <div className='text-[#CBD5E0] text-sm'>
                       <div className='mt-4 flex justify-between'>
                         <Paragraph ellipsis={{ rows: 1, tooltip: item.created_by_account.name }} style={{ marginBottom: 8 }}>
-                          <span className='text-[#5E6472]'>
+                          <span className='text-[#CBD5E0]'>
                             创建人：{item.created_by_account.name}
                           </span>
                           {getAuthCode(item.created_by_account.id) && (
@@ -795,6 +851,10 @@ const Apps = () => {
                                 e.stopPropagation()
                                 e.preventDefault()
                                 debounce(it => handleEditApp(it, undefined), 500)(item)
+                              }}
+                              style={{
+                                color: '#00D4FF',
+                                textShadow: '0 0 8px rgba(0, 212, 255, 0.7)',
                               }}
                             >
                               编辑
@@ -809,16 +869,30 @@ const Apps = () => {
                                   setRefId(item.id)
                                   setRefVisible(true)
                                 }}
+                                style={{
+                                  color: '#FF00FF',
+                                  textShadow: '0 0 8px rgba(255, 0, 255, 0.7)',
+                                }}
                               >
                                 引用中
                               </Button>
                             )
                           }
                         </Paragraph>
-                        {item?.engine_status === '服务异常' && <span className='text-[red] text-[12px]'>{item?.engine_status}</span>}
+                        {item?.engine_status === '服务异常' && (
+                          <span 
+                            className='text-[12px]'
+                            style={{
+                              color: '#FF00FF',
+                              textShadow: '0 0 8px rgba(255, 0, 255, 0.7)',
+                            }}
+                          >
+                            {item?.engine_status}
+                          </span>
+                        )}
                       </div>
                       <Paragraph ellipsis={{ rows: 2, tooltip: item.description }} style={{ marginBottom: 8 }} className='h-[44px]'>
-                        <span className='text-[#5E6472] text-sm'>
+                        <span className='text-[#CBD5E0] text-sm'>
                           {item.description}
                         </span>
                       </Paragraph>
@@ -830,16 +904,46 @@ const Apps = () => {
                     </div>
 
                     <div className={style.lastLine}>
-                      <div className='text-[#5E6472] text-sm, text-[0.7292vw]'>
+                      <div className='text-sm, text-[0.7292vw]'>
                         {
                           item.status === 'draft'
-                            ? '未发布'
+                            ? (
+                              <span style={{ color: '#CBD5E0' }}>未发布</span>
+                            )
                             : <span>
-                              <Iconfont type="icon-fabu" style={{ color: '#0E5DD8' }} />
-                              <span className='text-[#0E5DD8] ml-1'>已发布</span>
-                              <Divider type="vertical" />
-                              更新于
-                              {formatTime(item.workflow_updated_at, 'YYYY-MM-DD HH:mm' as string)}
+                              <Iconfont 
+                                type="icon-fabu" 
+                                style={{ 
+                                  color: '#00D4FF',
+                                  textShadow: '0 0 8px rgba(0, 212, 255, 0.7)',
+                                }} 
+                              />
+                              <span 
+                                className='ml-1'
+                                style={{
+                                  color: '#00D4FF',
+                                  textShadow: '0 0 8px rgba(0, 212, 255, 0.7)',
+                                }}
+                              >
+                                已发布
+                              </span>
+                              <Divider 
+                                type="vertical" 
+                                style={{ 
+                                  borderColor: 'rgba(74, 85, 104, 0.5)',
+                                  margin: '0 8px',
+                                }} 
+                              />
+                              <span style={{ color: '#CBD5E0' }}>
+                                更新于
+                                <span style={{ 
+                                  color: '#00D4FF',
+                                  textShadow: '0 0 8px rgba(0, 212, 255, 0.5)',
+                                  marginLeft: '4px',
+                                }}>
+                                  {formatTime(item.workflow_updated_at, 'YYYY-MM-DD HH:mm' as string)}
+                                </span>
+                              </span>
                             </span>
                         }
 
@@ -922,7 +1026,13 @@ const Apps = () => {
                 }
               </InfiniteScroll>
             </div>)
-          : <Empty className='pt-[150px]' description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          : <Empty 
+              className='pt-[150px]' 
+              description={
+                <span style={{ color: '#CBD5E0' }}>暂无数据</span>
+              } 
+              image={Empty.PRESENTED_IMAGE_SIMPLE} 
+            />
         }
       </Spin>
 

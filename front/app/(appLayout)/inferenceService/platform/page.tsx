@@ -4,6 +4,7 @@ import { Button, Collapse, Empty, Form, Input, Modal, Pagination, Popconfirm, Se
 import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons'
 import { useUpdateEffect } from 'ahooks'
 import style from './page.module.scss'
+import '@/app/components/app-hub/app-list/tech-style.css'
 import ChatModal from './chatModal'
 import ClassifyMode from '@/app/components/tagSelect/ClassifyMode'
 import CreatorSelect from '@/app/components/tagSelect/creatorSelect'
@@ -352,10 +353,32 @@ const InferenceService = () => {
       <div className={style.inferenceWrap}>
         <div className='mt-[1.0417vw] flex justify-between'>
           <ClassifyMode needSpace={false} label='运行状态' selectLabels={selectLabels} setSelectLabels={setSelectLabels} type='inference' />
-          <Button type='primary' onClick={handleCreatePrompt}>新建推理服务</Button>
+          <Button 
+            type='primary' 
+            onClick={handleCreatePrompt}
+            style={{
+              background: 'linear-gradient(135deg, #0D3B66 0%, #00D4FF 100%)',
+              border: 'none',
+              boxShadow: '0 0 10px rgba(0, 212, 255, 0.5)',
+              textShadow: '0 0 8px rgba(0, 212, 255, 0.7)',
+            }}
+          >
+            新建推理服务
+          </Button>
         </div>
-        <div className='flex justify-between'>
-          <Form.Item label="其他选项">
+        <div 
+          className='flex justify-between'
+          style={{ 
+            background: 'rgba(26, 31, 54, 0.7)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(0, 212, 255, 0.3)',
+            borderRadius: '12px',
+            padding: '16px',
+            marginTop: '16px',
+            marginBottom: '16px',
+          }}
+        >
+          <Form.Item label="其他选项" style={{ marginBottom: 0 }}>
             <CreatorSelect value={creator} setCreator={setCreator} type='dataset' />
           </Form.Item>
           <Input.Search
@@ -364,7 +387,11 @@ const InferenceService = () => {
             allowClear
             onChange={e => setSearchVal(e.target.value)}
             onSearch={onSearchApp}
-            style={{ width: 270 }}
+            style={{ 
+              width: 270,
+              background: 'rgba(45, 55, 72, 0.8)',
+            }}
+            className="tech-search-input"
           />
         </div>
         {list?.length
@@ -428,7 +455,7 @@ const InferenceService = () => {
                         </div>,
                       )
                     }
-                    {item?.services.length === 0 && <div style={{ textAlign: 'center' }}>暂无数据，请先添加服务</div>}
+                    {item?.services.length === 0 && <div style={{ textAlign: 'center', color: '#CBD5E0' }}>暂无数据，请先添加服务</div>}
                   </Panel>,
                 )
               }
@@ -437,7 +464,13 @@ const InferenceService = () => {
               <Pagination style={{ justifyContent: 'flex-end', marginTop: 10 }} current={pageOption.page} onChange={onPageChange} total={total} />
             </div>
           </div>
-          : <Empty className='pt-[150px]' description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />}
+          : <Empty 
+              className='pt-[150px]' 
+              description={
+                <span style={{ color: '#CBD5E0' }}>暂无数据</span>
+              } 
+              image={Empty.PRESENTED_IMAGE_SIMPLE} 
+            />}
         <Modal width={520} cancelText="取消" confirmLoading={btnLoading} okText={'确定'} title={title} open={isModalOpen} onOk={handleOk} onCancel={handleCancel}>
           <div className={style.createWrap}>
             <Form form={form} className={style.resetForm}>

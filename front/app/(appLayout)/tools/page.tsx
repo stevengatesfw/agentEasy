@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Button, Col, Form, Input, Modal, Popconfirm, Row, Switch, Tabs, Tag, Tooltip } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
 import styles from './page.module.scss'
+import '@/app/components/app-hub/app-list/tech-style.css'
 import InfoModal from './InfoModule'
 import InfoMcpModel from './InfomcpModel'
 import PageDrawer from './pageDrawer'
@@ -283,15 +284,35 @@ const Tools = () => {
     <div className={styles.toolWrap}>
       <div className={styles.tabsWrap}>
         <div className={styles.pageTop}>
-          {/* <Radio.Group options={options.filter(item => userSpecified?.tenant?.status === 'private' ? item.value !== 'group' : true)} value={type} onChange={onChange} optionType="button" /> */}
           <TagMode ref={selectToolRef} selectLabels={selectTags} setSelectLabels={setSelectTags} type='tool' />
-          <Button type='primary' onClick={handleCreate}>新建工具</Button>
+          <Button 
+            type='primary' 
+            onClick={handleCreate}
+            style={{
+              background: 'linear-gradient(135deg, #0D3B66 0%, #00D4FF 100%)',
+              border: 'none',
+              boxShadow: '0 0 10px rgba(0, 212, 255, 0.5)',
+              textShadow: '0 0 8px rgba(0, 212, 255, 0.7)',
+            }}
+          >
+            新建工具
+          </Button>
         </div>
         <div><ClassifyMode label='形态' selectLabels={selectLabels} setSelectLabels={setSelectLabels} type='toolType' /></div>
         <div><ClassifyMode needSpace={false} label='发布情况' selectLabels={selectStatus} setSelectLabels={setSelectStatus} type='toolStatu' /></div>
-        <div className='flex justify-between'>
-          {/* <SearchSelect ref={selectRef} value={sValue} onChange={sChange} type='tool' /> */}
-          <Form.Item label="其他选项">
+        <div 
+          className='flex justify-between'
+          style={{ 
+            background: 'rgba(26, 31, 54, 0.7)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(0, 212, 255, 0.3)',
+            borderRadius: '12px',
+            padding: '16px',
+            marginTop: '16px',
+            marginBottom: '16px',
+          }}
+        >
+          <Form.Item label="其他选项" style={{ marginBottom: 0 }}>
             <CreatorSelect value={creator} setCreator={setCreator} type='tool' />
           </Form.Item>
           <Input.Search
@@ -300,7 +321,11 @@ const Tools = () => {
             allowClear
             onChange={e => setSearchVal(e.target.value)}
             onSearch={onSearchApp}
-            style={{ width: 270 }}
+            style={{ 
+              width: 270,
+              background: 'rgba(45, 55, 72, 0.8)',
+            }}
+            className="tech-search-input"
           />
         </div>
       </div>
@@ -308,7 +333,7 @@ const Tools = () => {
         {list.length === 0
           ? (
             <div className="w-full flex justify-center items-center" style={{ minHeight: '500px' }}>
-              <span className="text-[#999]">暂无数据</span>
+              <span style={{ color: '#CBD5E0' }}>暂无数据</span>
             </div>
           )
           : (
@@ -339,25 +364,50 @@ const Tools = () => {
                         </div>
                         <div className={styles.infoWrap}>
                           <div className={styles.info}>
-                            <div className={`${styles.name} ellipsis`} title={item.name}>{item.name}</div>
+                            <div 
+                              className={`${styles.name} ellipsis`} 
+                              title={item.name}
+                              style={{
+                                color: '#FFFFFF',
+                                textShadow: '0 0 8px rgba(0, 212, 255, 0.5)',
+                              }}
+                            >
+                              {item.name}
+                            </div>
                             <div className={styles.stateWrap}>
                               <div className={styles.type}>{getType(item.tool_type)}</div>
                             </div>
 
                           </div>
-                          <div className='text-[#5E6472] text-[12px]'>
+                          <div style={{ color: '#CBD5E0', fontSize: '12px' }}>
                             {item.publish && canEdit(item?.user_id) && <div>
-                              是否开启：<Switch size='small' value={item.enable} onChange={(checked: boolean) => onSwitchChange(checked, item)} onClick={(checked, e) => { e.stopPropagation() }} />
+                              是否开启：<Switch 
+                                size='small' 
+                                value={item.enable} 
+                                onChange={(checked: boolean) => onSwitchChange(checked, item)} 
+                                onClick={(checked, e) => { e.stopPropagation() }}
+                                style={{
+                                  background: item.enable ? 'rgba(0, 212, 255, 0.3)' : undefined,
+                                }}
+                              />
                             </div>}
                             {item.need_share && canEdit(item?.user_id) && <div>
-                              是否共享：<Switch size='small' value={item.share} onChange={(checked: boolean) => onSwitchShareChange(checked, item)} onClick={(checked, e) => { e.stopPropagation() }} />
+                              是否共享：<Switch 
+                                size='small' 
+                                value={item.share} 
+                                onChange={(checked: boolean) => onSwitchShareChange(checked, item)} 
+                                onClick={(checked, e) => { e.stopPropagation() }}
+                                style={{
+                                  background: item.share ? 'rgba(0, 212, 255, 0.3)' : undefined,
+                                }}
+                              />
                             </div>}
                           </div>
                         </div>
 
                       </div>
                       <div className='flex justify-between'>
-                        <div className={styles.desc}>创建人：{item.user_name}</div>
+                        <div className={styles.desc} style={{ color: '#CBD5E0' }}>创建人：{item.user_name}</div>
                         {
                           item?.ref_status && item?.enable && (
                             <Button
@@ -528,7 +578,7 @@ const Tools = () => {
         {mcpList.length === 0
           ? (
             <div className="w-full flex justify-center items-center" style={{ minHeight: '500px' }}>
-              <span className="text-[#999]">暂无数据</span>
+              <span style={{ color: '#CBD5E0' }}>暂无数据</span>
             </div>
           )
           : (
@@ -559,7 +609,16 @@ const Tools = () => {
                         </div>
                         <div className={styles.infoWrap}>
                           <div className={styles.info}>
-                            <div className={`${styles.name} ellipsis`} title={item.name}>{item.name}</div>
+                            <div 
+                              className={`${styles.name} ellipsis`} 
+                              title={item.name}
+                              style={{
+                                color: '#FFFFFF',
+                                textShadow: '0 0 8px rgba(0, 212, 255, 0.5)',
+                              }}
+                            >
+                              {item.name}
+                            </div>
                             <div className={styles.stateWrap}>
                               <div className={styles.type}>Mcp</div>
                             </div>
@@ -573,7 +632,7 @@ const Tools = () => {
 
                       </div>
                       <div className='flex justify-between'>
-                        <div className={styles.desc}>创建人：{item.user_name}</div>
+                        <div className={styles.desc} style={{ color: '#CBD5E0' }}>创建人：{item.user_name}</div>
                         {
                           item?.ref_status && item?.enable && (
                             <Button

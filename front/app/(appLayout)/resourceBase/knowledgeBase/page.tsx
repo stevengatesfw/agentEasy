@@ -5,6 +5,7 @@ import { Button, Col, Form, Input, Popconfirm, Row, Tag } from 'antd'
 import { useRouter } from 'next/navigation'
 import { ReadOutlined } from '@ant-design/icons'
 import styles from './page.module.scss'
+import '@/app/components/app-hub/app-list/tech-style.css'
 import InfoModal from './InfoModal'
 import UploadModule from './UploadModule'
 import { deleteKnowledgeBase, getKnowledgeBaseList } from '@/infrastructure/api/knowledgeBase'
@@ -110,12 +111,33 @@ const KnowledgeBase = () => {
     <div className={styles.knowledgeWrap}>
       <div className={styles.pageTop}>
         <TagMode ref={selectRef} selectLabels={selectTags} setSelectLabels={setSelectTags} type='knowledgebase' onRefresh={onRefresh} />
-        <Button className={styles.btnCreate} type="primary" onClick={handleCreate}>
+        <Button 
+          className={styles.btnCreate} 
+          type="primary" 
+          onClick={handleCreate}
+          style={{
+            background: 'linear-gradient(135deg, #0D3B66 0%, #00D4FF 100%)',
+            border: 'none',
+            boxShadow: '0 0 10px rgba(0, 212, 255, 0.5)',
+            textShadow: '0 0 8px rgba(0, 212, 255, 0.7)',
+          }}
+        >
           新建知识库
         </Button>
       </div>
-      <div className='flex justify-between'>
-        <Form.Item label="其他选项">
+      <div 
+        className='flex justify-between'
+        style={{ 
+          background: 'rgba(26, 31, 54, 0.7)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(0, 212, 255, 0.3)',
+          borderRadius: '12px',
+          padding: '16px',
+          marginTop: '16px',
+          marginBottom: '16px',
+        }}
+      >
+        <Form.Item label="其他选项" style={{ marginBottom: 0 }}>
           <CreatorSelect value={creator} setCreator={setCreator} type='knowledgebase' />
         </Form.Item>
         <Input.Search
@@ -124,14 +146,18 @@ const KnowledgeBase = () => {
           allowClear
           onChange={e => setSearchVal(e.target.value)}
           onSearch={onSearchApp}
-          style={{ width: 270 }}
+          style={{ 
+            width: 270,
+            background: 'rgba(45, 55, 72, 0.8)',
+          }}
+          className="tech-search-input"
         />
       </div>
       <div className={styles.content}>
         {list.length === 0
           ? (
             <div className="w-full flex justify-center items-center" style={{ minHeight: '500px' }}>
-              <span className="text-[#999]">暂无数据</span>
+              <span style={{ color: '#CBD5E0' }}>暂无数据</span>
             </div>
           )
           : (
@@ -147,7 +173,7 @@ const KnowledgeBase = () => {
                         <span className={styles.name}>{item.name}</span>
                       </div>
                       <div className='flex items-center'>
-                        <div className={styles.cardContent}>
+                        <div className={styles.cardContent} style={{ color: '#CBD5E0' }}>
                           创建人：{item.user_name}
                         </div>
                         {
@@ -158,6 +184,10 @@ const KnowledgeBase = () => {
                                 e.stopPropagation()
                                 setRefId(item.id)
                                 setRefVisible(true)
+                              }}
+                              style={{
+                                color: '#FF00FF',
+                                textShadow: '0 0 8px rgba(255, 0, 255, 0.7)',
                               }}
                             >
                               引用中

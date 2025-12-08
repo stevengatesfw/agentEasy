@@ -1,6 +1,20 @@
+// 科技感风格 - 动画定义
+@keyframes neonPulse {
+  0% {
+    box-shadow: 0 0 5px rgba(0, 212, 255, 0.5), 0 0 10px rgba(0, 212, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.8), 0 0 30px rgba(0, 212, 255, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(0, 212, 255, 0.5), 0 0 10px rgba(0, 212, 255, 0.3);
+  }
+}
+
 .tabsWrap {
   padding: 1.5625vw;
   padding-bottom: 1.0417vw;
+  background: #1A1F36; // 科技感深灰蓝色背景
 }
 
 .pageTop {
@@ -12,22 +26,49 @@
 .content {
   padding: 0px 1.5625vw;
   padding-bottom: 1.0417vw;
+  background: #1A1F36; // 科技感深灰蓝色背景
 }
 
 .cardItem {
   width: 100%;
-  // min-width: 405px;
-  min-height: 220px; // 设置最小高度确保一致性
+  min-height: 220px;
   padding: 16px;
-  // margin: 5px;
   box-sizing: border-box;
-  background: #ffffff;
-  box-shadow: 0px 0px 4px 0px rgba(7, 17, 39, 0.12);
+  // 科技感毛玻璃效果卡片
+  background: rgba(26, 31, 54, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 212, 255, 0.3);
   border-radius: 12px;
+  position: relative;
+  transition: all 0.3s ease;
+
+  // 发光边框效果
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 12px;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.3), rgba(255, 0, 255, 0.3));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
 
   &:hover {
-    box-shadow: 0px 8px 24px 0px rgba(7, 17, 39, 0.12);
-    transform: scale(1.005);
+    border-color: rgba(0, 212, 255, 0.6);
+    transform: translateY(-2px);
+    animation: neonPulse 3s infinite;
+    
+    &::before {
+      opacity: 1;
+    }
   }
 }
 
@@ -40,7 +81,14 @@
   height: 56px;
   border-radius: 8px;
   flex-shrink: 0;
-  border: 1px solid #F0F1F3;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  background: rgba(45, 55, 72, 0.5);
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: rgba(0, 212, 255, 0.6);
+    box-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+  }
 
   img {
     width: 100%;
@@ -65,6 +113,8 @@
 
 .name {
   width: 100%;
+  color: #FFFFFF;
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
 }
 
 .stateWrap {
@@ -76,14 +126,21 @@
 
 .type {
   height: 24px;
-  background: #F0F5FC;
+  background: rgba(45, 55, 72, 0.8);
   border-radius: 4px;
-  border: 1px solid #F0F1F3;
+  border: 1px solid rgba(0, 212, 255, 0.3);
   text-align: center;
   font-size: 12px;
-  color: #0E5DD8;
+  color: #00D4FF;
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
   line-height: 24px;
   padding: 0 4px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(0, 212, 255, 0.2);
+    border-color: rgba(0, 212, 255, 0.5);
+  }
 }
 
 .kind {
@@ -95,11 +152,12 @@
   margin-left: 0.5208vw;
   display: flex;
   align-items: center;
-  color: #071127;
+  color: #CBD5E0;
   font-size: 12px;
 
   .icon {
-    color: #0E5DD8
+    color: #00D4FF;
+    text-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
   }
 }
 
@@ -115,14 +173,14 @@
   width: 100%;
   height: 24px;
   font-size: 0.7292vw;
-  color: #5E6472;
+  color: #CBD5E0;
   line-height: 1.25vw;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-height: 22px; // 描述也需要固定最小高度
+  min-height: 22px;
 }
 
 .tagWrap {
@@ -192,13 +250,20 @@
   overflow: hidden;
   text-overflow: ellipsis;
   box-sizing: border-box;
-  color: #8F949E;
-  background: #F6F7F8;
+  color: #CBD5E0;
+  background: rgba(45, 55, 72, 0.8);
   border-radius: 4px;
   font-size: 12px;
-  border: 1px solid #F0F1F3;
+  border: 1px solid rgba(0, 212, 255, 0.2);
   margin-right: 8px;
   flex-shrink: 0;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(0, 212, 255, 0.2);
+    border-color: rgba(0, 212, 255, 0.5);
+    color: #00D4FF;
+  }
 }
 
 .moreTag {
@@ -213,10 +278,16 @@
   width: 24px;
   height: 24px;
   font-size: 14px;
+  background: rgba(45, 55, 72, 0.8);
+  border: 1px solid rgba(74, 85, 104, 0.5);
+  color: #CBD5E0;
+  transition: all 0.3s ease;
 
   &:hover {
-    border: 1px solid #0e5dd8;
-    color: #0e5dd8;
+    background: rgba(0, 212, 255, 0.2);
+    border-color: rgba(0, 212, 255, 0.6);
+    color: #00D4FF;
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
     cursor: pointer;
   }
 }
@@ -258,13 +329,17 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #F6F7F8;
+  background: rgba(45, 55, 72, 0.8);
   border-radius: 4px;
-  border: 1px solid #F0F1F3;
+  border: 1px solid rgba(74, 85, 104, 0.5);
+  color: #CBD5E0;
+  transition: all 0.3s ease;
 
   &:hover {
-    border: 1px solid #0e5dd8;
-    color: #0e5dd8;
+    background: rgba(0, 212, 255, 0.2);
+    border-color: rgba(0, 212, 255, 0.6);
+    color: #00D4FF;
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
     cursor: pointer;
   }
 }

@@ -1,0 +1,199 @@
+/* 科技感风格全局样式 */
+
+/* 页面背景色 - 确保整个页面使用深灰蓝色背景 */
+/* 针对 /apps 路由的页面背景 */
+body {
+  background: #1A1F36 !important;
+}
+
+/* 确保主内容区域背景色 */
+main {
+  background: #1A1F36 !important;
+}
+
+/* 确保所有可能的容器都使用深色背景 */
+html {
+  background: #1A1F36 !important;
+}
+
+/* 针对 apps 页面的特定样式 */
+[data-pathname="/apps"],
+[data-pathname="/apps/"] {
+  background: #1A1F36 !important;
+}
+
+/* 确保布局容器背景色 */
+#__next,
+#root,
+.next-container {
+  background: #1A1F36 !important;
+}
+
+/* 下拉菜单样式 */
+.tech-select-dropdown .ant-select-dropdown {
+  background: rgba(26, 31, 54, 0.95) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 212, 255, 0.3) !important;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3) !important;
+}
+
+.tech-select-dropdown .ant-select-item {
+  color: #CBD5E0 !important;
+  background: transparent !important;
+}
+
+.tech-select-dropdown .ant-select-item:hover {
+  background: rgba(0, 212, 255, 0.2) !important;
+  color: #00D4FF !important;
+}
+
+.tech-select-dropdown .ant-select-item-option-selected {
+  background: rgba(0, 212, 255, 0.3) !important;
+  color: #00D4FF !important;
+}
+
+/* 输入框样式 */
+.tech-search-input .ant-input {
+  background: rgba(45, 55, 72, 0.8) !important;
+  border: 1px solid rgba(74, 85, 104, 0.5) !important;
+  color: #FFFFFF !important;
+  transition: all 0.3s ease;
+}
+
+.tech-search-input .ant-input::placeholder {
+  color: #CBD5E0 !important;
+}
+
+.tech-search-input .ant-input:hover {
+  border-color: rgba(0, 212, 255, 0.5) !important;
+}
+
+.tech-search-input .ant-input:focus {
+  border-color: rgba(0, 212, 255, 0.8) !important;
+  box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2) !important;
+}
+
+.tech-search-input .ant-input-search-button {
+  background: rgba(0, 212, 255, 0.3) !important;
+  border-color: rgba(0, 212, 255, 0.5) !important;
+  color: #00D4FF !important;
+}
+
+.tech-search-input .ant-input-search-button:hover {
+  background: rgba(0, 212, 255, 0.5) !important;
+  border-color: rgba(0, 212, 255, 0.8) !important;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.5) !important;
+}
+
+/* Select 组件样式 */
+.ant-select:not(.ant-select-disabled):hover .ant-select-selector {
+  border-color: rgba(0, 212, 255, 0.5) !important;
+}
+
+.ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector {
+  border-color: rgba(0, 212, 255, 0.8) !important;
+  box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2) !important;
+}
+
+.ant-select-selector {
+  background: rgba(45, 55, 72, 0.8) !important;
+  border: 1px solid rgba(74, 85, 104, 0.5) !important;
+  color: #FFFFFF !important;
+}
+
+.ant-select-selection-item {
+  color: #FFFFFF !important;
+}
+
+.ant-select-selection-placeholder {
+  color: #CBD5E0 !important;
+}
+
+/* Switch 开关样式 */
+.ant-switch-checked {
+  background: rgba(0, 212, 255, 0.6) !important;
+}
+
+.ant-switch-checked:hover:not(.ant-switch-disabled) {
+  background: rgba(0, 212, 255, 0.8) !important;
+}
+
+.ant-switch-handle::before {
+  background: #FFFFFF !important;
+  box-shadow: 0 0 4px rgba(0, 212, 255, 0.5) !important;
+}
+
+/* Empty 组件样式 */
+.ant-empty-description {
+  color: #CBD5E0 !important;
+}
+
+/* Form Item Label 样式 */
+.ant-form-item-label > label {
+  color: #CBD5E0 !important;
+}
+
+/* Tag 组件样式 */
+.ant-tag {
+  background: rgba(45, 55, 72, 0.8) !important;
+  border: 1px solid rgba(0, 212, 255, 0.2) !important;
+  color: #CBD5E0 !important;
+}
+
+/* Button Link 样式 */
+.ant-btn-link {
+  color: #00D4FF !important;
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.7);
+}
+
+.ant-btn-link:hover {
+  color: #00E5FF !important;
+  text-shadow: 0 0 12px rgba(0, 212, 255, 1);
+}
+
+/* Divider 样式 */
+.ant-divider {
+  border-color: rgba(74, 85, 104, 0.5) !important;
+}
+
+/* Tooltip 样式 */
+.ant-tooltip-inner {
+  background: rgba(26, 31, 54, 0.95) !important;
+  border: 1px solid rgba(0, 212, 255, 0.3) !important;
+  color: #CBD5E0 !important;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.3) !important;
+}
+
+.ant-tooltip-arrow::before {
+  background: rgba(26, 31, 54, 0.95) !important;
+  border: 1px solid rgba(0, 212, 255, 0.3) !important;
+}
+
+/* Popconfirm 样式 */
+.ant-popover-inner {
+  background: rgba(26, 31, 54, 0.95) !important;
+  border: 1px solid rgba(0, 212, 255, 0.3) !important;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3) !important;
+}
+
+.ant-popover-inner-content {
+  color: #CBD5E0 !important;
+}
+
+.ant-popconfirm-buttons .ant-btn-primary {
+  background: linear-gradient(135deg, #0D3B66 0%, #00D4FF 100%) !important;
+  border: none !important;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.5) !important;
+}
+
+.ant-popconfirm-buttons .ant-btn-default {
+  background: rgba(45, 55, 72, 0.8) !important;
+  border: 1px solid rgba(74, 85, 104, 0.5) !important;
+  color: #CBD5E0 !important;
+}
+
+.ant-popconfirm-buttons .ant-btn-default:hover {
+  border-color: rgba(0, 212, 255, 0.5) !important;
+  color: #00D4FF !important;
+}
+

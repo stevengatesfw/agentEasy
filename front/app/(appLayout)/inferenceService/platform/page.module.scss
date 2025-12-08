@@ -1,18 +1,37 @@
+// 科技感风格 - 动画定义
+@keyframes neonPulse {
+  0% {
+    box-shadow: 0 0 5px rgba(0, 212, 255, 0.5), 0 0 10px rgba(0, 212, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.8), 0 0 30px rgba(0, 212, 255, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(0, 212, 255, 0.5), 0 0 10px rgba(0, 212, 255, 0.3);
+  }
+}
+
 .inferenceWrap {
   width: 84.7083vw;
   margin: 0 auto;
-  // padding-top: 1.5625vw;
   height: auto;
-  // overflow-x: scroll;
+  background: #1A1F36; // 科技感深灰蓝色背景
+  padding: 20px;
+  min-height: 100vh;
 
   .panelSty {
     :global(.ant-collapse-header) {
-      background: #FFF !important;
+      background: rgba(26, 31, 54, 0.7) !important;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 212, 255, 0.3) !important;
       padding: 12px 16px !important;
+      color: #FFFFFF !important;
+      text-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
     }
 
     :global(.ant-collapse-content) {
-      background: #FAFAFB !important;
+      background: rgba(26, 31, 54, 0.5) !important;
+      border: 1px solid rgba(0, 212, 255, 0.2) !important;
     }
 
     :global(.ant-collapse-content-box) {
@@ -31,21 +50,26 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      color: #FFFFFF;
+      text-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
     }
 
     .colNum {
       width: 20.7917vw;
       text-align: center;
+      color: #CBD5E0;
     }
 
     .colNum2 {
       width: 15.4167vw;
       text-align: center;
+      color: #CBD5E0;
     }
 
     .colNum3 {
       width: 12.4167vw;
       text-align: center;
+      color: #CBD5E0;
     }
   }
 
@@ -54,18 +78,26 @@
     justify-content: space-between;
     align-items: center;
     padding: 8px 0px 8px 16px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+    color: #CBD5E0;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: rgba(0, 212, 255, 0.05);
+    }
 
     .nameSty {
       width: 30.5542vw;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      color: #FFFFFF;
     }
 
     .creator {
       width: 15.7917vw;
       text-align: center;
+      color: #CBD5E0;
     }
 
     .statuSty {
@@ -76,6 +108,7 @@
     .createTime {
       width: 15.625vw;
       text-align: center;
+      color: #CBD5E0;
     }
 
     .actionSty {
@@ -95,7 +128,7 @@
 
     .sourceInfo {
       font-size: 14px;
-      color: #5E6472;
+      color: #CBD5E0;
     }
 
     .title {
@@ -104,9 +137,13 @@
       align-items: center;
       margin-top: 25px;
       line-height: 50px;
-      background: #F5F6F7;
+      background: rgba(26, 31, 54, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 212, 255, 0.3);
       border-radius: 4px 4px 0px 0px;
       padding: 0 16px;
+      color: #FFFFFF;
+      text-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
 
       .item1 {
         width: 27.8542vw;

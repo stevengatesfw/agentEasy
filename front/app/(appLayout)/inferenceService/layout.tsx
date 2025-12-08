@@ -26,9 +26,16 @@ const InferenceService = ({ children }) => {
     setActiveMenu(activeMenu || 'platformService')
   }, [])
   return (
-    <div className='flex flex-row h-screen'>
-      {/* 侧边栏，最小宽度为100px */}
-      <div className='w-48 bg-gray-50 border-r border-gray-200 flex flex-col min-w-[100px] flex-shrink-0'>
+    <div className='flex flex-row h-screen' style={{ background: '#1A1F36' }}>
+      {/* 侧边栏，科技感风格 */}
+      <div 
+        className='w-48 flex flex-col min-w-[100px] flex-shrink-0'
+        style={{
+          background: 'rgba(26, 31, 54, 0.8)',
+          backdropFilter: 'blur(10px)',
+          borderRight: '1px solid rgba(0, 212, 255, 0.3)',
+        }}
+      >
         <div className='flex flex-col py-4'>
           {menuItems.map((item) => {
             const IconComponent = item.icon
@@ -37,19 +44,42 @@ const InferenceService = ({ children }) => {
             return (
               <Link href={item.path}
                 key={item.key}
-                className={`
-                  flex items-center px-4 py-3 mx-2 rounded-lg cursor-pointer transition-all duration-200
-                  ${isActive
-                ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
-                : 'text-gray-700 hover:bg-gray-100'
-              }
-                `}
+                className='flex items-center px-4 py-3 mx-2 rounded-lg cursor-pointer transition-all duration-200'
+                style={{
+                  background: isActive ? 'rgba(0, 212, 255, 0.2)' : 'transparent',
+                  color: isActive ? '#00D4FF' : '#CBD5E0',
+                  textShadow: isActive ? '0 0 8px rgba(0, 212, 255, 0.7)' : 'none',
+                  border: isActive ? '1px solid rgba(0, 212, 255, 0.3)' : '1px solid transparent',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'rgba(0, 212, 255, 0.1)'
+                    e.currentTarget.style.color = '#00D4FF'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'transparent'
+                    e.currentTarget.style.color = '#CBD5E0'
+                  }
+                }}
                 onClick={() => setActiveMenu(item.key)}
               >
-                <div className={`w-5 h-5 mr-3 ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>
+                <div 
+                  className='w-5 h-5 mr-3'
+                  style={{
+                    color: isActive ? '#00D4FF' : '#CBD5E0',
+                  }}
+                >
                   <IconComponent />
                 </div>
-                <span className={`font-medium ${isActive ? 'text-blue-600' : 'text-gray-700'}`}>
+                <span 
+                  className='font-medium'
+                  style={{
+                    color: isActive ? '#00D4FF' : '#CBD5E0',
+                    textShadow: isActive ? '0 0 8px rgba(0, 212, 255, 0.7)' : 'none',
+                  }}
+                >
                   {item.label}
                 </span>
               </Link>
@@ -59,7 +89,7 @@ const InferenceService = ({ children }) => {
       </div>
 
       {/* 主内容区域 */}
-      <div className='flex-1 p-6 bg-white '>
+      <div className='flex-1' style={{ background: '#1A1F36' }}>
         {children}
       </div>
     </div>

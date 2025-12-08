@@ -1,7 +1,7 @@
 .container {
   width: 100%;
   height: calc(100vh - 60px);
-  background: #fff;
+  background: #1A1F36; // 科技感深灰蓝色背景
   display: flex;
 }
 
@@ -11,8 +11,9 @@
   padding: 1.5625vw 10px;
   box-sizing: border-box;
   overflow-y: auto;
-  border-right: 1px solid #F0F5FC;
-  background: #FCFCFD;
+  border-right: 1px solid rgba(0, 212, 255, 0.3);
+  background: rgba(26, 31, 54, 0.8);
+  backdrop-filter: blur(10px);
 
   .menu {
       width: 100%;
@@ -27,11 +28,20 @@
       align-items: center;
       cursor: pointer;
       margin-bottom: 11px;
+      color: #CBD5E0;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: rgba(0, 212, 255, 0.1);
+        color: #00D4FF;
+      }
   }
 
   .active {
-      background: #F0F5FC;
-      color: #0E5DD8;
+      background: rgba(0, 212, 255, 0.2);
+      color: #00D4FF;
+      text-shadow: 0 0 8px rgba(0, 212, 255, 0.7);
+      border: 1px solid rgba(0, 212, 255, 0.3);
   }
 
   .icon {
@@ -45,4 +55,5 @@
   flex: 1;
   height: 100%;
   overflow-y: auto;
+  background: #1A1F36; // 科技感深灰蓝色背景
 }

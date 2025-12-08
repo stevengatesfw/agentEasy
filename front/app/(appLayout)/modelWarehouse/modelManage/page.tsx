@@ -9,6 +9,7 @@ import ModelList from './ModelListModal'
 import CreateModal from './CreateModule'
 import EditModel from './EditModel'
 import styles from './page.module.scss'
+import '@/app/components/app-hub/app-list/tech-style.css'
 import Toast, { ToastTypeEnum } from '@/app/components/base/flash-notice'
 import HoverGuide from '@/app/components/base/hover-tip-pro'
 import IconFont from '@/app/components/base/iconFont'
@@ -186,12 +187,23 @@ const ModelWarehouse = () => {
     setSName(e)
   }
   return (
-    <div className="page">
+    <div className="page" style={{ background: '#1A1F36', minHeight: '100vh', padding: '20px 0' }}>
       <div className={styles.tabsWrap}>
         <div className={styles.pageTop}>
           <div></div>
           <div>
-            <Button type='primary' onClick={handleCreate}>新建模型</Button>
+            <Button 
+              type='primary' 
+              onClick={handleCreate}
+              style={{
+                background: 'linear-gradient(135deg, #0D3B66 0%, #00D4FF 100%)',
+                border: 'none',
+                boxShadow: '0 0 10px rgba(0, 212, 255, 0.5)',
+                textShadow: '0 0 8px rgba(0, 212, 255, 0.7)',
+              }}
+            >
+              新建模型
+            </Button>
           </div>
         </div>
 
@@ -208,23 +220,43 @@ const ModelWarehouse = () => {
         <div>
           <TagMode needSpace={false} label='模型标签' ref={selectRef} selectLabels={selectTags} setSelectLabels={setSelectTags} type='model' url='tags' />
         </div>
-        <div className='mt-[1.0417vw] flex justify-between'>
-          <Form.Item label='其他选项'>
+        <div 
+          className='mt-[1.0417vw] flex justify-between'
+          style={{ 
+            background: 'rgba(26, 31, 54, 0.7)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(0, 212, 255, 0.3)',
+            borderRadius: '12px',
+            padding: '16px',
+            marginTop: '16px',
+            marginBottom: '16px',
+          }}
+        >
+          <Form.Item label='其他选项' style={{ marginBottom: 0 }}>
             <Select
               value={tValue}
               allowClear
-              style={{ width: 120, marginRight: 10 }}
+              style={{ 
+                width: 120, 
+                marginRight: 10,
+                background: 'rgba(45, 55, 72, 0.8)',
+              }}
               onChange={handleChange}
               placeholder='可用状态'
               options={[
                 { value: 1, label: '可用模型' },
                 { value: 0, label: '不可用模型' },
               ]}
+              popupClassName="tech-select-dropdown"
             />
             <Select
               value={dValue}
               allowClear
-              style={{ width: 120, marginRight: 10 }}
+              style={{ 
+                width: 120, 
+                marginRight: 10,
+                background: 'rgba(45, 55, 72, 0.8)',
+              }}
               onChange={downChange}
               placeholder='下载状态'
               options={[
@@ -232,6 +264,7 @@ const ModelWarehouse = () => {
                 { value: 1, label: '未下载' },
                 { value: 4, label: '下载失败' },
               ]}
+              popupClassName="tech-select-dropdown"
             />
           </Form.Item>
           <div>
@@ -240,8 +273,12 @@ const ModelWarehouse = () => {
               value={searchVal}
               onChange={e => setSearchVal(e.target.value)}
               onSearch={onSearchApp}
-              style={{ width: 270 }}
+              style={{ 
+                width: 270,
+                background: 'rgba(45, 55, 72, 0.8)',
+              }}
               allowClear
+              className="tech-search-input"
             />
           </div>
         </div>
@@ -334,7 +371,13 @@ const ModelWarehouse = () => {
               </Row>
             )
             : (
-              <Empty className='pt-[150px]' description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              <Empty 
+                className='pt-[150px]' 
+                description={
+                  <span style={{ color: '#CBD5E0' }}>暂无数据</span>
+                } 
+                image={Empty.PRESENTED_IMAGE_SIMPLE} 
+              />
             )}
         </div>
       </Spin>
