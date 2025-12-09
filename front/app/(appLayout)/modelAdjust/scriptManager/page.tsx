@@ -7,6 +7,7 @@ import { useUpdateEffect } from 'ahooks'
 import Image from 'next/image'
 import p1 from './assets/script.png'
 import style from './page.module.scss'
+import '@/app/components/app-hub/app-list/tech-style.css'
 import { useApplicationContext } from '@/shared/hooks/app-context'
 import CreatorSelect from '@/app/components/tagSelect/creatorSelect'
 import ClassifyMode, { tagList } from '@/app/components/tagSelect/ClassifyMode'
@@ -256,17 +257,36 @@ const ScriptManage = () => {
   return (
     <div className={style.scriptWrap}>
       <div className={style.top}>
-        {/* <Radio.Group options={authRadio.is_self_space ? mineAuthOptions : authOptions} onChange={altChange} value={authValue} optionType="button" /> */}
         <ClassifyMode selectLabels={selectLabels} setSelectLabels={setSelectLabels} type='script' singleSelect={true} />
-        <Button type='primary' onClick={handleCreateScript}>新建脚本</Button>
+        <Button 
+          type='primary' 
+          onClick={handleCreateScript}
+          style={{
+            background: 'linear-gradient(135deg, #0D3B66 0%, #00D4FF 100%)',
+            border: 'none',
+            boxShadow: '0 0 10px rgba(0, 212, 255, 0.5)',
+            textShadow: '0 0 8px rgba(0, 212, 255, 0.7)',
+          }}
+        >
+          新建脚本
+        </Button>
       </div>
       <div className={style.search}>
-        {/* <Radio.Group options={options} onChange={onChange} value={value} optionType="button" /> */}
-        <Form.Item label="其他选项">
+        <Form.Item label="其他选项" style={{ marginBottom: 0 }}>
           <CreatorSelect value={creator} setCreator={setCreator} type='dataset' />
-
         </Form.Item>
-        <Input.Search allowClear onChange={onSearchChange} value={sValue} onSearch={onSearch} style={{ width: 270 }} placeholder='请输入关键字进行搜索' />
+        <Input.Search 
+          allowClear 
+          onChange={onSearchChange} 
+          value={sValue} 
+          onSearch={onSearch} 
+          style={{ 
+            width: 270,
+            background: 'rgba(45, 55, 72, 0.8)',
+          }} 
+          placeholder='请输入关键字进行搜索'
+          className="tech-search-input"
+        />
       </div>
       {loading && !list?.length
         ? <div className='flex justify-center items-center' style={{ height: '400px' }}>
@@ -331,7 +351,13 @@ const ScriptManage = () => {
               }
             </InfiniteScroll>
           </div>
-          : <Empty className='pt-[150px]' description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />}
+          : <Empty 
+              className='pt-[150px]' 
+              description={
+                <span style={{ color: '#CBD5E0' }}>暂无数据</span>
+              } 
+              image={Empty.PRESENTED_IMAGE_SIMPLE} 
+            />}
       <Modal width={500} cancelText="取消" confirmLoading={btnLoading || loading} okText={isView ? '确定' : '保存'} title={title} open={isModalOpen} onOk={handleOk} onCancel={handleCancel}>
         <div className={style.createWrap}>
           <Form form={form} className={style.resetForm} layout="vertical">

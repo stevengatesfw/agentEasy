@@ -6,7 +6,6 @@ import type { TableProps } from 'antd'
 import { useAntdTable, useUpdateEffect } from 'ahooks'
 import { useRouter } from 'next/navigation'
 import styles from '../index.module.scss'
-import '@/app/components/app-hub/app-list/tech-style.css'
 import Toast from '@/app/components/base/flash-notice'
 import ClassifyMode from '@/app/components/tagSelect/ClassifyMode'
 import CreatorSelect from '@/app/components/tagSelect/creatorSelect'
@@ -280,56 +279,15 @@ const ModelAdjust = () => {
     <div className={styles.content}>
       <div className={styles.craBtn}>
         <ClassifyMode needSpace={false} label='运行状态' selectLabels={selectLabels} setSelectLabels={setSelectLabels} type='modelAdjust' />
-        {authValue === 'mine' && (
-          <Button 
-            type='primary' 
-            onClick={handleCreate}
-            style={{
-              background: 'linear-gradient(135deg, #0D3B66 0%, #00D4FF 100%)',
-              border: 'none',
-              boxShadow: '0 0 10px rgba(0, 212, 255, 0.5)',
-              textShadow: '0 0 8px rgba(0, 212, 255, 0.7)',
-            }}
-          >
-            创建微调
-          </Button>
-        )}
+        {authValue === 'mine' && <Button type='primary' onClick={handleCreate}>创建微调</Button>}
       </div>
-      <div 
-        className={styles.tableHeader}
-        style={{ 
-          background: 'rgba(26, 31, 54, 0.7)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(0, 212, 255, 0.3)',
-          borderRadius: '12px',
-          padding: '16px',
-          marginTop: '16px',
-          marginBottom: '16px',
-        }}
-      >
-        <Form.Item label="其他选项" style={{ marginBottom: 0 }}>
+      <div className={styles.tableHeader}>
+        <Form.Item label="其他选项">
           <CreatorSelect value={creator} setCreator={setCreator} type='dataset' />
         </Form.Item>
-        <Input.Search 
-          allowClear 
-          onChange={onChange} 
-          value={name} 
-          onSearch={onSearch} 
-          style={{ 
-            width: 270,
-            background: 'rgba(45, 55, 72, 0.8)',
-          }} 
-          placeholder='请输入任务名称'
-          className="tech-search-input"
-        />
+        <Input.Search allowClear onChange={onChange} value={name} onSearch={onSearch} style={{ width: 270 }} placeholder='请输入任务名称' />
       </div>
-      <Table 
-        rowKey="id" 
-        scroll={{ x: 'max-content' }} 
-        columns={columns} 
-        {...tableProps}
-        className="tech-table"
-      />
+      <Table rowKey="id" scroll={{ x: 'max-content' }} columns={columns} {...tableProps} />
     </div>
   </div>
 }

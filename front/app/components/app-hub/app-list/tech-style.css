@@ -29,6 +29,85 @@ html {
   background: #1A1F36 !important;
 }
 
+/* 表格样式 - 科技感风格 */
+.tech-table :global(.ant-table),
+.tech-table :global(.ant-table-container),
+.tech-table :global(.ant-table-content) {
+  background: transparent !important;
+}
+
+.tech-table :global(.ant-table-thead > tr > th) {
+  background: rgba(26, 31, 54, 0.7) !important;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 212, 255, 0.3) !important;
+  color: #FFFFFF !important;
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+  font-weight: 600;
+}
+
+.tech-table :global(.ant-table-tbody > tr > td) {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.2) !important;
+  color: #CBD5E0 !important;
+}
+
+.tech-table :global(.ant-table-tbody > tr:hover > td) {
+  background: rgba(0, 212, 255, 0.05) !important;
+}
+
+.tech-table :global(.ant-table-tbody > tr) {
+  transition: all 0.3s ease;
+}
+
+.tech-table :global(.ant-table-tbody > tr:hover) {
+  background: rgba(0, 212, 255, 0.05) !important;
+}
+
+.tech-table :global(.ant-pagination) {
+  color: #CBD5E0 !important;
+}
+
+.tech-table :global(.ant-pagination-item) {
+  background: rgba(45, 55, 72, 0.8) !important;
+  border: 1px solid rgba(0, 212, 255, 0.3) !important;
+}
+
+.tech-table :global(.ant-pagination-item a) {
+  color: #CBD5E0 !important;
+}
+
+.tech-table :global(.ant-pagination-item:hover) {
+  border-color: rgba(0, 212, 255, 0.6) !important;
+}
+
+.tech-table :global(.ant-pagination-item:hover a) {
+  color: #00D4FF !important;
+}
+
+.tech-table :global(.ant-pagination-item-active) {
+  background: rgba(0, 212, 255, 0.2) !important;
+  border-color: rgba(0, 212, 255, 0.6) !important;
+}
+
+.tech-table :global(.ant-pagination-item-active a) {
+  color: #00D4FF !important;
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.7);
+}
+
+/* 确保 .page 类使用深色背景 */
+.page {
+  background: #1A1F36 !important;
+}
+
+/* 确保表格单元格文字颜色正确 */
+.tech-table :global(.ant-table-tbody > tr > td) {
+  color: #CBD5E0 !important;
+}
+
+.tech-table :global(.ant-table-thead > tr > th) {
+  color: #FFFFFF !important;
+}
+
 /* 下拉菜单样式 */
 .tech-select-dropdown .ant-select-dropdown {
   background: rgba(26, 31, 54, 0.95) !important;
