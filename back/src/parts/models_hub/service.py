@@ -1059,12 +1059,32 @@ class ModelService:
                 {"deleted_flag": 1}, synchronize_session=False
             )
             db.session.commit()
-            logging.info(f"module delete success: {model.model_name}")
+            logging.info(f"module db delete success: {model.model_name}")
+            
+        logging.info(f"module file delete start: {model.model_path}")
+        # 先计算文件大小（用于恢复存储配额）
+        model_size = 0
+        if model.model_path and os.path.exists(model.model_path):
+            try:
+                model_size = FileTools.get_dir_path_size(model.model_path)
+            except Exception as e:
+                logging.warning(f"计算模型文件大小失败: {model.model_path}, 错误: {str(e)}")
+        
+        # 删除本地模型文件（如果存在）
+        if model.model_path and os.path.exists(model.model_path):
+            try:
+                if os.path.isdir(model.model_path):
+                    shutil.rmtree(model.model_path)
+                    logging.info(f"已删除本地模型目录: {model.model_path}")
+                else:
+                    os.remove(model.model_path)
+                    logging.info(f"已删除本地模型文件: {model.model_path}")
+            except Exception as e:
+                logging.warning(f"删除本地模型文件失败: {model.model_path}, 错误: {str(e)}")
+        
         # 删除对应模型路径下的资源占用
         # Tenant.restore_used_storage(model.tenant_id, FileTools.get_dir_path_size(model.model_path))
-        Tenant.restore_used_storage(
-            model.tenant_id, FileTools.get_dir_path_size(model.model_path)
-        )
+        Tenant.restore_used_storage(model.tenant_id, model_size)
 
         # # 删除对应模型子模型路径下的资源占用
         child_model = db.session.query(Lazymodel).filter(
@@ -1090,9 +1110,28 @@ class ModelService:
             )
             db.session.commit()
             logging.info(f"module delete success: {child.model_name}")
-            Tenant.restore_used_storage(
-                model.tenant_id, FileTools.get_dir_path_size(child.model_path)
-            )
+            
+            # 先计算子模型文件大小（用于恢复存储配额）
+            child_model_size = 0
+            if child.model_path and os.path.exists(child.model_path):
+                try:
+                    child_model_size = FileTools.get_dir_path_size(child.model_path)
+                except Exception as e:
+                    logging.warning(f"计算子模型文件大小失败: {child.model_path}, 错误: {str(e)}")
+            
+            # 删除子模型的本地文件（如果存在）
+            if child.model_path and os.path.exists(child.model_path):
+                try:
+                    if os.path.isdir(child.model_path):
+                        shutil.rmtree(child.model_path)
+                        logging.info(f"已删除子模型本地目录: {child.model_path}")
+                    else:
+                        os.remove(child.model_path)
+                        logging.info(f"已删除子模型本地文件: {child.model_path}")
+                except Exception as e:
+                    logging.warning(f"删除子模型本地文件失败: {child.model_path}, 错误: {str(e)}")
+            
+            Tenant.restore_used_storage(model.tenant_id, child_model_size)
         return True
 
     def delete_finetune_model(self, model_id, finetune_model_id):

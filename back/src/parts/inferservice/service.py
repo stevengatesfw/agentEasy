@@ -958,15 +958,22 @@ class InferService:
         
         if self.supplier == "lazyllm":
             original_model_name = model_name
-            model_name = model_name.split(":")[-1]
-            logging.info(
-                f"ams_start_service: split 处理 - 原始='{original_model_name}', "
-                f"处理后='{model_name}'"
-            )
-            if not model_name:
-                logging.error(
-                    f"ams_start_service: 错误！处理后的 model_name 为空字符串！"
-                    f"原始值='{original_model_name}'"
+            # 如果是绝对路径，不进行 split 处理（绝对路径不包含 : 作为分隔符）
+            # 只有非绝对路径才需要处理 finetune 模型的格式（如 base_model:finetuned_model）
+            if not os.path.isabs(model_name):
+                model_name = model_name.split(":")[-1]
+                logging.info(
+                    f"ams_start_service: split 处理 - 原始='{original_model_name}', "
+                    f"处理后='{model_name}'"
+                )
+                if not model_name:
+                    logging.error(
+                        f"ams_start_service: 错误！处理后的 model_name 为空字符串！"
+                        f"原始值='{original_model_name}'"
+                    )
+            else:
+                logging.info(
+                    f"ams_start_service: 检测到绝对路径，直接使用 - model_name='{model_name}'"
                 )
         
         json_data = {"service_name": service_name, "model_name": model_name}
@@ -1066,11 +1073,41 @@ class InferService:
                 )
                 logging.info(f"start_service: 拼接后的 infer_model_name='{infer_model_name}'")
             elif model_info.model_from == "modelscope":
-                # 对于 modelscope 类型的模型，使用 model_key（包含命名空间路径）
-                infer_model_name = model_info.model_key
+                # 对于 modelscope 类型的模型，优先使用 model_path（如果存在且可访问）
+                # 这样可以避免重复下载已下载的模型
                 logging.info(
-                    f"start_service: modelscope 模型，使用 model_key='{infer_model_name}'"
+                    f"start_service: modelscope 模型，model_path='{model_info.model_path}'"
                 )
+                
+                # 处理路径转换：如果 model_path 是容器内的路径（如 /root/.lazyllm/model），
+                # 尝试转换为挂载的 volume 路径
+                model_path_to_check = model_info.model_path
+                if model_path_to_check:
+                    # 如果路径是 /root/.lazyllm/model/...，尝试转换为挂载路径
+                    if model_path_to_check.startswith('/root/.lazyllm/model/'):
+                        # 提取相对路径部分（如 modelscope/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B）
+                        relative_path = model_path_to_check.replace('/root/.lazyllm/model/', '')
+                        # 尝试在挂载的 volume 中查找
+                        mounted_model_path = os.path.join('/mnt/lustre/share_data/models', relative_path)
+                        logging.info(f"start_service: mounted_model_path='{mounted_model_path}'")
+                        if os.path.exists(mounted_model_path):
+                            model_path_to_check = mounted_model_path
+                            logging.info(
+                                f"start_service: 路径转换成功 - 原路径='{model_info.model_path}', "
+                                f"新路径='{mounted_model_path}'"
+                            )
+                
+                if model_path_to_check and os.path.exists(model_path_to_check):
+                    infer_model_name = model_path_to_check
+                    logging.info(
+                        f"start_service: modelscope 模型，使用数据库中的 model_path='{infer_model_name}'（避免重复下载）"
+                    )
+                else:
+                    # 如果 model_path 不存在，使用 model_key（包含命名空间路径）
+                    infer_model_name = model_info.model_key
+                    logging.info(
+                        f"start_service: modelscope 模型，使用 model_key='{infer_model_name}'（model_path 不存在或不可访问）"
+                    )
             elif model_info.model_from in ["localModel", "huggingface", "existModel"]:
                 # 对于用户创建的本地模型，使用 model_name 或 model_path
                 # 如果配置了 framework 和 endpoint，则可以使用
