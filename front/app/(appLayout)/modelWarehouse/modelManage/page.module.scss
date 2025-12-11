@@ -132,17 +132,6 @@
   overflow: hidden;
   margin: 8px 0;
 
-  &::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 0;
-    height: 100%;
-    width: 40px;
-    background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
-    pointer-events: none; // 确保不影响点击事件
-  }
-
   .tagInner {
     display: flex;
     flex-wrap: nowrap;
