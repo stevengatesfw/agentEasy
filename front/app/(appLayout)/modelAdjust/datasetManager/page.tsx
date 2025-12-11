@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation'
 import CreateModule from './CreateModal'
 import styles from './index.module.scss'
 import TagMode from '@/app/components/tagSelect/TagMode'
-import ClassifyMode from '@/app/components/tagSelect/ClassifyMode'
 import CreatorSelect from '@/app/components/tagSelect/creatorSelect'
 import useRadioAuth from '@/shared/hooks/use-radio-auth'
 import Toast from '@/app/components/base/flash-notice'
@@ -169,7 +168,7 @@ const DataSetManager = () => {
   }
   return <div className='page'>
     <div className={styles.pageTop}>
-      <ClassifyMode selectLabels={selectLabels} setSelectLabels={setSelectLabels} type='dataset' />
+      <div></div>
       <Button type='primary' onClick={handleCreate}>添加数据集</Button>
     </div>
     <div className={styles.content}>
