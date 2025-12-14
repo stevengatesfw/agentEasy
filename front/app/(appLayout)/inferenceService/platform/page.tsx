@@ -407,7 +407,7 @@ const InferenceService = () => {
                           <div className={style.creator}>创建者：{ite?.created_by}</div>
                           <div className={style.createTime}>创建时间: {ite?.updated_at}</div>
                           <div className={style.actionSty}>
-                            {item?.model_type === 'localLLM' && <Button disabled={ite?.status !== 'Ready'} type='link' size='small' onClick={e => openTest(e, ite)}>测试</Button>}
+                            {(item?.model_type === 'localLLM' || item?.model_type === 'OCR') && <Button disabled={ite?.status !== 'Ready'} type='link' size='small' onClick={e => openTest(e, ite)}>测试</Button>}
                             {canEdit(item?.user_id) && <span>
                               {
                                 ite?.status === 'Cancelled' || ite?.status === 'Done'
