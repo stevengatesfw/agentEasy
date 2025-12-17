@@ -61,7 +61,7 @@ const Tools = () => {
   }, [])
 
   const getCardList = useCallback(async () => {
-    const res: any = await getToolsList({ url: '/tool/list', body: { page: 1, page_size: 9999, search_tags: selectTags.map(item => item.name), search_name: sName, user_id: creator, tool_mode: selectLabels.map(item => item?.id), published: selectStatus.map(item => item?.id) } })
+    const res: any = await getToolsList({ url: '/tool/list', body: { page: 1, page_size: 9999, search_tags: selectTags.filter(item => item && item.name).map(item => item.name), search_name: sName, user_id: creator, tool_mode: selectLabels.filter(item => item && item.id).map(item => item.id), published: selectStatus.filter(item => item && item.id).map(item => item.id) } })
     setList(res.data)
   }, [type, sName, selectLabels, selectTags, selectStatus, creator])
 
@@ -70,7 +70,8 @@ const Tools = () => {
       { label: '官方内置', value: 'defaultOfficial' },
       { label: '自定义', value: 'self' },
     ]
-    return map.filter(item => item.value === type)[0].label
+    const found = map.find(item => item.value === type)
+    return found?.label || '未知'
   }
 
   const onSwitchChange = (checked: boolean, data: any) => {
@@ -218,7 +219,7 @@ const Tools = () => {
 
   // 插件mcp
   const getmcpList = async () => {
-    const res: McpListResponse = await getMcpList({ body: { page: 1, page_size: 9999, search_tags: tagList.map(item => item.name), search_name: sNamemap, user_id: otherOptions, tool_mode: selectLabels.map(item => item?.id), published: selectStatus.map(item => item?.id) } })
+    const res: McpListResponse = await getMcpList({ body: { page: 1, page_size: 9999, search_tags: tagList.filter(item => item && item.name).map(item => item.name), search_name: sNamemap, user_id: otherOptions, tool_mode: selectLabels.filter(item => item && item.id).map(item => item.id), published: selectStatus.filter(item => item && item.id).map(item => item.id) } })
     setMcpList(res.data)
   }
   const onSearchAppMcp = (e) => {
@@ -654,18 +655,25 @@ const Tools = () => {
   ])
 
   // 使用 useMemo 缓存标签页配置，避免重新创建
-  const tabItems = useMemo(() => [
-    {
+  const tabItems = useMemo(() => {
+    const items = []
+    // 确保 CustomToolsContent 和 ToolsMcp 都是有效的 React 元素
+    const customContent = CustomToolsContent || <div>加载中...</div>
+    const mcpContent = ToolsMcp || <div>加载中...</div>
+    
+    items.push({
       key: 'custom',
       label: '自定义工具',
-      children: CustomToolsContent,
-    },
-    {
+      children: customContent,
+    })
+    items.push({
       key: 'mcp',
       label: '插件工具（MCP）',
-      children: ToolsMcp,
-    },
-  ], [CustomToolsContent])
+      children: mcpContent,
+    })
+    
+    return items
+  }, [CustomToolsContent, ToolsMcp])
 
   return (
     <div className={styles.toolWrap}>
