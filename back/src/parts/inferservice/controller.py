@@ -421,6 +421,30 @@ class DeleteService(Resource):
         return build_response(message="Service deleted failed")
 
 
+class GpuInfo(Resource):
+    """获取推理节点 GPU 信息（用于前端动态显示显卡数量）。"""
+
+    @login_required
+    def get(self):
+        # 兼容前端以 GET 方式请求
+        return self.post()
+
+    @login_required
+    def post(self):
+        try:
+            import os
+            import requests
+
+            url = (os.getenv("AMS_ENDPOINT") or "http://cloud-service:31340") + "/v1/system/gpu_info"
+            headers = {"token": os.getenv("AMS_TOKEN") or "default_token"}
+            r = requests.get(url, headers=headers, timeout=5)
+            if r.status_code != 200:
+                return build_response(status=500, message="gpu info failed")
+            return build_response(result=r.json())
+        except Exception as e:
+            return build_response(status=500, message=str(e))
+
+
 class CloseServiceGroup(Resource):
     """关闭服务组控制器。
 
@@ -634,5 +658,6 @@ api.add_resource(CloseServiceGroup, "/infer-service/group/close")
 api.add_resource(StartService, "/infer-service/service/start")
 api.add_resource(StopService, "/infer-service/service/stop")
 api.add_resource(DeleteService, "/infer-service/service/delete")
+api.add_resource(GpuInfo, "/infer-service/gpu/info")
 api.add_resource(ListForDrawService, "/infer-service/list/draw")
 api.add_resource(AMSModelListService, "/infer-service/model/list/ams")
