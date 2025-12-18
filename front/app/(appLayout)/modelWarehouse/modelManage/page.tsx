@@ -104,6 +104,25 @@ const ModelWarehouse = () => {
     }
     finally { setLoading(false) }
   }, [type, category, sName, sValue, tValue, kind, dValue, selectTags])
+
+  const getFrameworkTagColor = (framework?: string) => {
+    const f = (framework || 'auto').toLowerCase()
+    if (f.includes('vllm'))
+      return 'geekblue'
+    if (f.includes('lmdeploy'))
+      return 'purple'
+    if (f.includes('sensevoice'))
+      return 'cyan'
+    if (f.includes('mindie'))
+      return 'gold'
+    if (f.includes('embedding'))
+      return 'green'
+    if (f.includes('reranker'))
+      return 'volcano'
+    if (f.includes('ocr'))
+      return 'blue'
+    return 'default'
+  }
   const handleCreate = async () => {
     const isValid = await validate()
     if (isValid)
@@ -265,6 +284,13 @@ const ModelWarehouse = () => {
                               <div className={styles.stateWrap}>
                                 {!type && <div className={styles.type}>{item.model_type === 'local' ? '本地模型' : '在线大模型'}</div>}
                                 <div className={`${styles.type} ${styles.kind}`}>{item.model_kind_display}</div>
+                                <div className={styles.loading}>
+                                  <Tooltip title={`推理框架：${item?.framework || 'auto'}${item?.endpoint ? `，端点：${item.endpoint}` : ''}`} placement="bottom">
+                                    <Tag color={getFrameworkTagColor(item?.framework)}>
+                                      {item?.framework || 'auto'}
+                                    </Tag>
+                                  </Tooltip>
+                                </div>
                                 <div className={styles.loading}>
                                   {
                                     item?.model_type === 'local' && item.model_status == 1 && <Tag color="warning">

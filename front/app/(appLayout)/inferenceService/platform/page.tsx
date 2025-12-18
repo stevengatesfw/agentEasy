@@ -1,7 +1,8 @@
 'use client'
 import React, { useEffect, useRef, useState } from 'react'
 import { Button, Collapse, Empty, Form, Input, Modal, Pagination, Popconfirm, Select, Spin, Tag, message } from 'antd'
-import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons'
+import { MinusCircleOutlined, PlusCircleOutlined, QuestionCircleOutlined } from '@ant-design/icons'
+import { Tooltip } from 'antd'
 import { useUpdateEffect } from 'ahooks'
 import style from './page.module.scss'
 import ChatModal from './chatModal'
@@ -63,6 +64,20 @@ const InferenceService = () => {
   const [sName, setSName] = useState('')
   const [selectLabels, setSelectLabels] = useState([]) as any
   const [creator, setCreator] = useState([]) as any
+  const [gpuCount, setGpuCount] = useState<number>(4)
+
+  const getGpuInfo = async () => {
+    try {
+      const res: any = await getPromptList({
+        url: '/infer-service/gpu/info',
+        options: {},
+      })
+      const count = Number(res?.gpu_count)
+      if (Number.isFinite(count) && count >= 1)
+        setGpuCount(Math.floor(count))
+    }
+    catch {}
+  }
 
   // 添加轮询相关的引用
   const pollingTimer = useRef<NodeJS.Timeout | null>(null)
@@ -155,6 +170,10 @@ const InferenceService = () => {
   useEffect(() => {
     getList(pageOption.page, '')
   }, [pageOption.page])
+
+  useEffect(() => {
+    getGpuInfo()
+  }, [])
 
   useUpdateEffect(() => {
     getList(1, '')
@@ -468,7 +487,7 @@ const InferenceService = () => {
                 </Form.Item>}
               <Form.List
                 name="services"
-                initialValue={[{ name: '' }]}
+                initialValue={[{ name: '', model_num_gpus: 1 }]}
               >
                 {(fields, { add, remove }) => (
                   <>
@@ -479,33 +498,88 @@ const InferenceService = () => {
                         required
                         key={key}
                       >
-                        <Form.Item
-                          name={[name, 'name']}
-                          validateTrigger={['onChange', 'onBlur']}
-                          rules={[
-                            {
-                              required: true,
-                              whitespace: true,
-                              pattern: /^[a-zA-Z0-9]+$/,
-                              message: '只能输入大小英文和数字',
-                            },
-                          ]}
-                          noStyle
-                        >
-                          <Input placeholder="请输入" style={{ width: '80%' }} />
-                        </Form.Item>
-                        {index == 0
-                          ? <PlusCircleOutlined style={{ color: '#0E5DD8' }} className='ml-[5px]' onClick={() => add()} />
-                          : (<span>
-                            <PlusCircleOutlined style={{ color: '#0E5DD8' }} className='ml-[5px]' onClick={() => add()} />
-                            <MinusCircleOutlined
-                              className="dynamic-delete-button ml-[5px]"
-                              style={{ color: '#0E5DD8' }}
-                              onClick={() => remove(name)}
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                          <Form.Item
+                            name={[name, 'name']}
+                            validateTrigger={['onChange', 'onBlur']}
+                            rules={[
+                              {
+                                required: true,
+                                whitespace: true,
+                                pattern: /^[a-zA-Z0-9]+$/,
+                                message: '只能输入大小英文和数字',
+                              },
+                            ]}
+                            noStyle
+                          >
+                            <Input placeholder="请输入" style={{ width: '80%' }} />
+                          </Form.Item>
+                          {index == 0
+                            ? <PlusCircleOutlined
+                                style={{ color: '#0E5DD8', cursor: 'pointer' }}
+                                className='ml-[5px]'
+                                onClick={() => {
+                                  const current = form.getFieldValue(['services', name]) || {}
+                                  add({ name: current?.name || '', model_num_gpus: current?.model_num_gpus })
+                                }}
+                              />
+                            : (<span>
+                                <PlusCircleOutlined
+                                  style={{ color: '#0E5DD8', cursor: 'pointer' }}
+                                  className='ml-[5px]'
+                                  onClick={() => {
+                                    const current = form.getFieldValue(['services', name]) || {}
+                                    add({ name: current?.name || '', model_num_gpus: current?.model_num_gpus })
+                                  }}
+                                />
+                                <MinusCircleOutlined
+                                  className="dynamic-delete-button ml-[5px]"
+                                  style={{ color: '#0E5DD8', cursor: 'pointer' }}
+                                  onClick={() => remove(name)}
+                                />
+                              </span>
+                              )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', marginTop: 8 }}>
+                          <Form.Item
+                            name={[name, 'model_num_gpus']}
+                            rules={[
+                              {
+                                validator: (_, value) => {
+                                  if (value === undefined || value === null || value === '')
+                                    return Promise.reject(new Error('请输入显卡数量'))
+                                  const numValue = Number(value)
+                                  if (!Number.isInteger(numValue) || numValue < 1)
+                                    return Promise.reject(new Error('显卡数量需为大于等于1的整数'))
+                                  return Promise.resolve()
+                                },
+                              },
+                            ]}
+                            style={{ width: '80%', marginBottom: 0 }}
+                          >
+                            <Select
+                              placeholder="分配显卡数量"
+                              style={{ width: '100%' }}
+                              options={Array.from({ length: gpuCount }, (_, i) => {
+                                const v = i + 1
+                                return { label: String(v), value: v }
+                              })}
                             />
-                          </span>
-
-                          )}
+                          </Form.Item>
+                          <Tooltip
+                            placement="top"
+                            title={
+                              <div className='text-xs leading-relaxed max-w-[280px]'>
+                                <p>运行大模型占用的显存主要由以下组成(以Qwen3-32B、精度为FP16为例计算，占用显存约为64+8+2=74G)：</p>
+                                <p>1）模型权重：32B × 2 = 64 GB，固定不变。</p>
+                                <p>2）KV缓存：2 × 并发数 × 32K × 64 × 128 × 8 × 2，示例为并发1上下文32K，约8G；并发翻倍显存同步增加。</p>
+                                <p>3）激活值与开销：推理中间计算与框架额外占用约1-2G。</p>
+                              </div>
+                            }
+                          >
+                            <QuestionCircleOutlined style={{ color: '#0E5DD8', cursor: 'pointer', marginLeft: 8 }} />
+                          </Tooltip>
+                        </div>
                       </Form.Item>
                     ))}
                   </>

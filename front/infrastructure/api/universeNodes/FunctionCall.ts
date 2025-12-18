@@ -132,7 +132,11 @@ export const FunctionCall = {
                       tooltip: '选择推理服务',
                       _check_names: [],
                       itemProps: {
+                        // 对齐 OnlineLLM 节点的写法，避免表单渲染器按字段丢失 itemProps
+                        // inference-service-select 实际依赖 model_kind 参与接口过滤
                         model_type: 'localLLM',
+                        model_kind: 'localLLM',
+                        model_show_type: 'localLLM',
                       },
                     },
                     {}, {}, {},

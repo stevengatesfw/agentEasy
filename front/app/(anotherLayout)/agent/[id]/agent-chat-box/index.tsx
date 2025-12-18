@@ -1,7 +1,7 @@
 'use client'
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
-import { Input, Modal, Upload } from 'antd'
-import { UserOutlined } from '@ant-design/icons'
+import { Button, Input, Modal, Popconfirm, Upload } from 'antd'
+import { DeleteOutlined, EditOutlined, RedoOutlined, UserOutlined } from '@ant-design/icons'
 import { useKeyPress } from 'ahooks'
 import Image from 'next/image'
 import { v4 as uuidV4 } from 'uuid'
@@ -11,7 +11,7 @@ import { API_PREFIX } from '@/app-specs'
 import { getKeyboardKeyCodeBySystem } from '@/app/components/taskStream/utils'
 import { useAgentContext } from '@/shared/hooks/agent-context'
 import { ssePost } from '@/infrastructure/api/base'
-import { chatFeedback, getChatDetail } from '@/infrastructure/api/agent'
+import { chatFeedback, deleteAgentTurn, getChatDetail } from '@/infrastructure/api/agent'
 import BytesPreview from '@/app/components/taskStream/elements/_foundation/components/form/field-item/preview/bytes-preview'
 import HoverGuide from '@/app/components/base/hover-tip-pro'
 import Icon from '@/app/components/base/iconFont'
@@ -36,19 +36,13 @@ const AgentChatBox = ({ agentId, sidebar, draft, currentChatId, onChatIdChange }
   const [showLogic, setShowLogic] = useState<boolean | undefined>()
   const [errorModalVisible, setErrorModalVisible] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [editingTurn, setEditingTurn] = useState<number | null>(null)
+  const [editingOriginText, setEditingOriginText] = useState<string>('')
   useEffect(() => {
-    const agent_token = localStorage?.getItem('console_token') || localStorage?.getItem('agent_token')
-    if (!agent_token && !agentToken) {
-      getAgentToken({ appId: agentId })
-    }
-    else if (!agent_token && agentToken) {
-      localStorage?.setItem('agent_token', agentToken)
-    }
-    else if (agent_token) {
-      localStorage?.setItem('agent_token', agent_token)
-      getAgentHistorys({ appId: agentId })
-    }
+    // token 与 sessions 由 page.tsx 统一管理，这里不再做任何 token/历史的副作用
   }, [agentToken, agentId])
+
+  // 不再写入 agent_token_<appId>，避免与“绑定平台账号”的策略冲突
 
   const _processContent = (content: string) => {
     if (!content)
@@ -186,7 +180,8 @@ const AgentChatBox = ({ agentId, sidebar, draft, currentChatId, onChatIdChange }
       reqData.mode = 'draft'
 
     selfRef.current.result = ''
-    setDetailData({ ...detailData, result: selfRef.current.result, chatId: reqData.sessionid, isStreaming: true })
+    // 用函数式更新避免闭包中的 detailData 把 isStreaming 状态“写回去”
+    setDetailData(prev => ({ ...prev, result: selfRef.current.result, chatId: reqData.sessionid, isStreaming: true }))
     ssePost(`/conversation/${agentId}/run`,
       {
         body: reqData,
@@ -194,25 +189,30 @@ const AgentChatBox = ({ agentId, sidebar, draft, currentChatId, onChatIdChange }
       {
         isAgent: true,
         onFinish: (params: any) => {
-          const { data } = params
+          const { data, event } = params || {}
           const conclusionAreaEle = document.getElementById('agentRecordEle')
-          if (conclusionAreaEle) {
-            if (data && data.status === 'succeeded') {
-              const successMessage = data.outputs
-              selfRef.current.result = selfRef.current.result + JSON.stringify(successMessage)
-              setDetailData({ ...detailData, result: selfRef.current.result, chatId: reqData.sessionid, isStreaming: true })
+          // 注意：不要依赖 DOM 是否已挂载来更新结果；首个 chunk 很可能在渲染完成前到达
+          // 关键：后端通常会先发 event=result（答案字符串），再发 event=finish（包含同样的 outputs）
+          // 为避免重复，这里仅在“流中完全没收到内容”时，才用 finish.outputs 兜底填充结果。
+          if (event === 'finish' && data && data.status === 'succeeded') {
+            const outputs = data.outputs
+            const hasStreamContent = typeof selfRef.current.result === 'string' && selfRef.current.result.trim().length > 0
+            if (!hasStreamContent && outputs) {
+              selfRef.current.result = String(outputs)
+              setDetailData(prev => ({ ...prev, result: selfRef.current.result, chatId: reqData.sessionid, isStreaming: true }))
             }
-            else if (data && data.error) {
-              const errorMsg = data.error || '请求处理失败'
-              showErrorModal(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg))
-              setDetailData({ ...detailData, chatId: reqData.sessionid, isStreaming: false })
-            }
-            conclusionAreaEle.scrollTop = 99999999
           }
+          else if (data && data.error) {
+            const errorMsg = data.error || '请求处理失败'
+            showErrorModal(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg))
+            setDetailData(prev => ({ ...prev, chatId: reqData.sessionid, isStreaming: false }))
+          }
+          if (conclusionAreaEle)
+            conclusionAreaEle.scrollTop = 99999999
 
           // 处理流式对话结束
           if (selfRef.current.streamSegment) {
-            const [userQuestionData, answerData] = selfRef.current.streamSegment
+            const [_userQuestionData, answerData] = selfRef.current.streamSegment
             const processContent = (content) => {
               if (!content)
                 return ''
@@ -230,47 +230,100 @@ const AgentChatBox = ({ agentId, sidebar, draft, currentChatId, onChatIdChange }
               }).join('\\n')
             }
 
-            // 使用函数式更新，避免闭包问题
-            setChatList(prevChatList => [
-              ...prevChatList.map(item => ({
+            // 关键：updateAnswer 已经插入了「用户问题 + AI占位(__useStream=true)」
+            // onFinish 这里不应再次 append 同一轮问答，否则会出现“一问一答”重复两次
+            // 改为：更新占位的那条 AI 消息内容，并把 __useStream 置为 false
+            setChatList((prevChatList) => {
+              const next = prevChatList.map(item => ({
                 ...item,
                 content: item.content ? processContent(item.content) : item.content,
-              })),
-              userQuestionData,
-              { ...answerData, content: processContent(selfRef.current.result), __useStream: false },
-            ])
+              }))
+
+              for (let i = next.length - 1; i >= 0; i--) {
+                const item = next[i]
+                if (item?.__useStream) {
+                  next[i] = { ...answerData, ...item, content: processContent(selfRef.current.result), __useStream: false }
+                  break
+                }
+              }
+
+              return next
+            })
             selfRef.current.streamSegment = null
-            setDetailData({
-              ...detailData,
+            setDetailData(prev => ({
+              ...prev,
               result: selfRef.current.result,
               chatId: reqData.sessionid,
               isStreaming: false,
-            })
+            }))
             getAgentHistorys({ appId: agentId })
+          }
+          else {
+            // 兜底：即使没有 streamSegment（异常/中断），也必须结束“正在回答”，否则无法发送下一条
+            setDetailData(prev => ({ ...prev, chatId: reqData.sessionid, isStreaming: false }))
           }
         },
         onData: (message: string, _isFirstMessage: boolean, _moreInfo: any) => {
           const conclusionAreaEle = document.getElementById('agentRecordEle')
-          if (conclusionAreaEle) {
-            selfRef.current.result = selfRef.current.result + message
-            setDetailData({ ...detailData, result: selfRef.current.result, chatId: reqData.sessionid, isStreaming: true })
+          selfRef.current.result = selfRef.current.result + message
+          setDetailData(prev => ({ ...prev, result: selfRef.current.result, chatId: reqData.sessionid, isStreaming: true }))
+          if (conclusionAreaEle)
             conclusionAreaEle.scrollTop = 99999999
-          }
         },
         onChunk: (params) => {
           const conclusionAreaEle = document.getElementById('agentRecordEle')
-          if (conclusionAreaEle) {
-            selfRef.current.result = selfRef.current.result + params.data
-            setDetailData({ ...detailData, result: selfRef.current.result, chatId: reqData.sessionid, isStreaming: true })
+          selfRef.current.result = selfRef.current.result + params.data
+          setDetailData(prev => ({ ...prev, result: selfRef.current.result, chatId: reqData.sessionid, isStreaming: true }))
+          if (conclusionAreaEle)
             conclusionAreaEle.scrollTop = 99999999
-          }
         },
 
         onError: (msg: string, _code?: string) => {
           showErrorModal(msg || '网络请求失败，请稍后重试')
-          setDetailData({ ...detailData, chatId: reqData.sessionid, isStreaming: false })
+          setDetailData(prev => ({ ...prev, chatId: reqData.sessionid, isStreaming: false }))
         },
       })
+  }
+
+  const refreshCurrentSession = () => {
+    if (!detailData.chatId)
+      return
+    setRefreshHistoryTag(new Date().getTime())
+  }
+
+  const canOperateUserTurn = (turnNumber?: number) => {
+    if (!detailData.chatId || detailData.isStreaming)
+      return false
+    // 允许编辑/删除任意一轮（更符合你说的“单条会话可编辑/删除”）
+    return !!turnNumber
+  }
+
+  const handleEditUserTurn = (item: any) => {
+    if (!canOperateUserTurn(item?.turn_number))
+      return
+    setEditingTurn(item.turn_number)
+    setEditingOriginText(item.content || '')
+    setQuestionText(item.content || '')
+  }
+
+  const handleCancelEdit = () => {
+    setEditingTurn(null)
+    setEditingOriginText('')
+  }
+
+  const handleDeleteTurn = async (turnNumber: number) => {
+    if (!detailData.chatId)
+      return
+    await deleteAgentTurn({ appId: agentId, sessionid: detailData.chatId, turn_number: turnNumber })
+    refreshCurrentSession()
+  }
+
+  const handleResendEdited = async () => {
+    if (!detailData.chatId || editingTurn == null)
+      return
+    await handleDeleteTurn(editingTurn)
+    handleCancelEdit()
+    sendQuestion()
   }
 
   const clearChat = () => {
@@ -280,6 +333,7 @@ const AgentChatBox = ({ agentId, sidebar, draft, currentChatId, onChatIdChange }
     setChatList([])
     setQuestionText('')
     setFileUrl(undefined)
+    handleCancelEdit()
     onChatIdChange?.(undefined)
   }
   const setChatId = (chatId: string) => {
@@ -350,6 +404,7 @@ const AgentChatBox = ({ agentId, sidebar, draft, currentChatId, onChatIdChange }
                       chatList?.map((item, index) => {
                         const isAnswer = item.from_who === 'lazyllm'
                         const isLazyllm = item.from_who === 'lazyllm'
+                        const canOperate = !isLazyllm && canOperateUserTurn(item.turn_number)
                         return <div key={index} className={`${styles.chatRow} ${isAnswer ? styles.chatAnswer : styles.chatQuestion}`}>
                           <div>
                             {isAnswer
@@ -361,7 +416,36 @@ const AgentChatBox = ({ agentId, sidebar, draft, currentChatId, onChatIdChange }
                               </div>}
                           </div>
                           <div className={styles.chatContent}>
-                            <div className={styles.chatRole}>{isLazyllm ? 'LCAgent' : 'You'}</div>
+                            <div className={styles.chatRoleRow}>
+                              <div className={styles.chatRole}>{isLazyllm ? 'LCAgent' : 'You'}</div>
+                              {!isLazyllm && (
+                                <div className={styles.userActions}>
+                                  <HoverGuide popupContent={canOperate ? '编辑此条' : '回答生成中，暂不可编辑/删除'}>
+                                    <Button
+                                      size="small"
+                                      type="text"
+                                      disabled={!canOperate}
+                                      icon={<EditOutlined />}
+                                      onClick={() => handleEditUserTurn(item)}
+                                    />
+                                  </HoverGuide>
+                                  <Popconfirm
+                                    title="删除这一轮对话？"
+                                    description="将删除本轮的提问与回答"
+                                    okText="删除"
+                                    cancelText="取消"
+                                    onConfirm={() => handleDeleteTurn(item.turn_number)}
+                                  >
+                                    <Button
+                                      size="small"
+                                      type="text"
+                                      disabled={!canOperate}
+                                      icon={<DeleteOutlined />}
+                                    />
+                                  </Popconfirm>
+                                </div>
+                              )}
+                            </div>
 
                             <div className={styles.chatWord}>
                               {((showLogic && isLazyllm && index === chatList.length - 1) || item.__useStream)
@@ -422,6 +506,31 @@ const AgentChatBox = ({ agentId, sidebar, draft, currentChatId, onChatIdChange }
                 onKeyDown={handleKeyDown}
                 id='agentTextArea'
               />
+              {editingTurn != null && (
+                <div className={styles.editingBar}>
+                  <div className={styles.editingTip}>正在编辑上一条消息</div>
+                  <div className={styles.editingActions}>
+                    <Button
+                      size="small"
+                      onClick={() => {
+                        setQuestionText(editingOriginText)
+                        handleCancelEdit()
+                      }}
+                    >
+                      取消
+                    </Button>
+                    <Button
+                      size="small"
+                      type="primary"
+                      icon={<RedoOutlined />}
+                      onClick={handleResendEdited}
+                      disabled={detailData.isStreaming}
+                    >
+                      保存并重发
+                    </Button>
+                  </div>
+                </div>
+              )}
               <div className={styles.agentOperate}>
                 <div className={styles.operateBtn}>
                   {/* <Icon type="icon-wenjianshangchuan" style={{ fontSize: '22px', color: '#F00' }} /> */}

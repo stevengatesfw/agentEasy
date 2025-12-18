@@ -92,6 +92,14 @@
       }
     }
 
+    .chatRow:hover {
+      .chatContent {
+        .userActions {
+          opacity: 1;
+        }
+      }
+    }
+
     .chatAnswer {
       .chatWord {
         background: #ffffff;
@@ -141,10 +149,24 @@
       margin-left: 12px;
       width: 0;
 
+      .chatRoleRow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
       .chatRole {
         font-size: 16px;
         font-weight: bold;
         color: #262626;
+      }
+
+      .userActions {
+        display: flex;
+        align-items: center;
+        opacity: 1;
+        transition: opacity 0.15s ease;
       }
 
       .chatWord {
@@ -210,6 +232,31 @@
         position: relative;
         @include agent-chatbox-size;
 
+        .editingBar {
+          position: absolute;
+          left: 12px;
+          right: 12px;
+          bottom: 56px;
+          height: 44px;
+          border-radius: 10px;
+          background: rgba(22, 119, 255, 0.08);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 10px;
+          gap: 10px;
+        }
+
+        .editingTip {
+          font-size: 13px;
+          color: rgba(0, 0, 0, 0.75);
+        }
+
+        .editingActions {
+          display: flex;
+          gap: 8px;
+        }
+
         .agentOperate {
           height: 48px;
           position: absolute;
@@ -239,6 +286,28 @@
       }
 
 
+    }
+  }
+}
+
+// 移动端/平板适配：缩小 padding 与字号，避免内容溢出
+@media (max-width: 900px) {
+  .agentPage {
+    .agentChatbox {
+      .agentView {
+        .agentRecord {
+          padding: 16px 16px 0 16px;
+        }
+        .defaultText {
+          font-size: 20px;
+        }
+      }
+      .agentInput {
+        padding-bottom: 16px;
+        .inputCell {
+          width: 100%;
+        }
+      }
     }
   }
 }

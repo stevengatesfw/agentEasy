@@ -21,6 +21,9 @@ const ChatModal = (props: any) => {
   const [chatList, setChatList] = useState<any[]>([])
   const [questionText, setQuestionText] = useState('')
   const [fileUrl, setFileUrl] = useState()
+  const [fileList, setFileList] = useState<any[]>([])
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewSrc, setPreviewSrc] = useState<string | undefined>()
   const [showLogic, setShowLogic] = useState<boolean | undefined>()
   const inputChange = (e) => {
     setQuestionText(e.target.value);
@@ -38,9 +41,9 @@ const ChatModal = (props: any) => {
     // Shift + Enter 换行（默认行为，不需要处理）
   }
 
-  const updateAnswer = ({ userQuestion }) => {
+  const updateAnswer = ({ userQuestion, files }) => {
     selfRef.current.streamSegment = [
-      { content: userQuestion, from_who: 'user' },
+      { content: userQuestion, from_who: 'user', files: files || [] },
       { content: '', __useStream: true, from_who: 'lazyllm' },
     ]
     setQuestionText('')
@@ -51,6 +54,7 @@ const ChatModal = (props: any) => {
     setShowLogic(true)
   }
   const sendQuestion = () => {
+    const isUploading = (fileList || []).some((f: any) => f?.status === 'uploading')
     const files = !fileUrl
       ? []
       : [
@@ -64,14 +68,34 @@ const ChatModal = (props: any) => {
     if (detailData.isStreaming)
       return
 
+    // 上传未完成时禁止发送，否则后端会收到空 files -> inputs required
+    if (isUploading)
+      return
+
     if (!questionText && files.length === 0)
       return
 
-    updateAnswer({ userQuestion: questionText })
+    // 会话里附件展示：优先用本地 blob 预览（避免用容器内路径导致图片显示不全/不显示）
+    const uiFiles: any[] = []
+    try {
+      const f0: any = (fileList || [])[0]
+      if (f0?.originFileObj) {
+        const blobUrl = URL.createObjectURL(f0.originFileObj)
+        uiFiles.push(blobUrl)
+      }
+    }
+    catch {
+      // ignore
+    }
+    updateAnswer({ userQuestion: questionText, files: uiFiles.length ? uiFiles : files })
     const reqData: any = {
       inputs: [questionText],
       files,
     }
+    // 发送后立即清空输入/附件，避免“附件一直残留在聊天窗”
+    setQuestionText('')
+    setFileUrl(undefined)
+    setFileList([])
     selfRef.current.result = ''
     setDetailData({ ...detailData, result: selfRef.current.result, chatId: agentId, isStreaming: true })
     ssePost(`/infer-service/test/${agentId}/run`, {
@@ -102,7 +126,22 @@ const ChatModal = (props: any) => {
       onFinish: (finish: any) => {
         if (selfRef.current.streamSegment) {
           const [userQuestionData, answerData] = selfRef.current.streamSegment || []
-          const finalContent = finish.data.outputs
+          // 兼容后端多种返回结构：
+          // - event=result: data 可能直接是字符串
+          // - event=finish: data 可能是 {status, outputs} 或 {status, error}
+          // - event=stop: 可能只有停止信号
+          const raw = finish?.data
+          // failed 时只展示 simple_error，别把整段 traceback 代码刷出来
+          const failedMsg = raw?.status === 'failed'
+            ? (raw?.error?.simple_error || raw?.error?.message || '执行失败')
+            : undefined
+          const finalContent
+            = failedMsg
+              ?? raw?.outputs
+              ?? raw?.raw
+              ?? raw?.query
+              ?? raw?.answer
+              ?? (typeof raw === 'string' ? raw : raw ? JSON.stringify(raw) : '')
           setChatList([
             ...(chatList || []),
             userQuestionData,
@@ -114,7 +153,7 @@ const ChatModal = (props: any) => {
         }
       },
       onError: (msg: string, code?: string) => {
-        setDetailData({ ...detailData, result: '网络错误，请稍后再试', chatId: agentId, isStreaming: false })
+        setDetailData({ ...detailData, result: msg || '网络错误，请稍后再试', chatId: agentId, isStreaming: false })
       },
     })
   }
@@ -124,6 +163,28 @@ const ChatModal = (props: any) => {
       setFileUrl(undefined)
     else
       setFileUrl(res?.file?.response?.file_path)
+    setFileList(res?.fileList || [])
+  }
+
+  const handlePreview = async (file: any) => {
+    try {
+      // 优先本地预览（originFileObj），无需依赖后端静态文件服务
+      if (file?.originFileObj) {
+        const url = URL.createObjectURL(file.originFileObj)
+        setPreviewSrc(url)
+        setPreviewOpen(true)
+        return
+      }
+      // 兜底：如果存在可用 url，则直接打开
+      const url = file?.url || file?.thumbUrl
+      if (url) {
+        setPreviewSrc(url)
+        setPreviewOpen(true)
+      }
+    }
+    catch {
+      // ignore
+    }
   }
 
   useKeyPress(`${getKeyboardKeyCodeBySystem('ctrl')}.enter`, () => {
@@ -195,7 +256,11 @@ const ChatModal = (props: any) => {
                                   />}
                                 {
                                   item?.files?.length > 0 && <div className={styles.chatBytes}>
-                                    <BytesPreview value={item.files} />
+                                    <BytesPreview
+                                      value={(item.files || [])
+                                        .map((f: any) => (typeof f === 'string' ? f : (f?.value || '')))
+                                        .filter((v: string) => !!v)}
+                                    />
                                   </div>
                                 }
                               </div>
@@ -231,6 +296,9 @@ const ChatModal = (props: any) => {
                       name='file'
                       action={`${API_PREFIX}/files/upload`}
                       onChange={fileChange}
+                      onPreview={handlePreview}
+                      fileList={fileList}
+                      showUploadList={{ showRemoveIcon: true, showPreviewIcon: true }}
                       className='agent-app-upload'
                       disabled={detailData.isStreaming}
                       multiple={false}
@@ -251,6 +319,22 @@ const ChatModal = (props: any) => {
           </div>
         </div>
       </div>
+      <Modal
+        open={previewOpen}
+        footer={null}
+        title="附件预览"
+        onCancel={() => {
+          setPreviewOpen(false)
+          // 释放 blob url
+          if (previewSrc?.startsWith('blob:'))
+            URL.revokeObjectURL(previewSrc)
+          setPreviewSrc(undefined)
+        }}
+      >
+        {previewSrc
+          ? <img src={previewSrc} style={{ width: '100%' }} alt="preview" />
+          : null}
+      </Modal>
     </Modal>
   )
 }
