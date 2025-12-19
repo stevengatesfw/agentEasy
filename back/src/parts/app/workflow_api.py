@@ -197,6 +197,12 @@ class DraftWorkflowRunApi(Resource):
         session_manager.get_next_turn_number()
 
         app_run = AppRunService.create(app_model, mode="draft")
+        workflow = WorkflowService().get_draft_workflow(app_id)
+        
+        # 确保引擎已启动（如果未启动则启动）
+        if not app_run._engine_manager.is_engine_running():
+            app_run.start(workflow.nested_graph_dict)
+        
         generator = app_run.run_stream(
             args.inputs, args.files, account=current_user, turn_number=-1
         )

@@ -1166,8 +1166,20 @@ class InferService:
                     )
             
             logging.info(f"start_service: 准备调用 ams_start_service，infer_model_name='{infer_model_name}'")
-            # framework 优先使用数据库配置；否则让 AMS 自动判定
-            framework = getattr(model_info, "framework", None) or "auto"
+            # framework 优先使用数据库配置；如果没有，根据 model_kind 自动设置；最后才使用 auto
+            framework = getattr(model_info, "framework", None)
+            if not framework:
+                # 根据 model_kind 自动设置 framework
+                from parts.models_hub.service import ModelService
+                model_service = ModelService(None)
+                framework, _ = model_service._get_framework_and_endpoint_by_model_kind(
+                    getattr(model_info, "model_kind", "")
+                )
+                logging.info(
+                    f"start_service: 根据 model_kind='{getattr(model_info, 'model_kind', '')}' 自动设置 framework='{framework}'"
+                )
+            if not framework:
+                framework = "auto"
             ams_start_service_result, ams_start_service_return = self.ams_start_service(
                 service.name,
                 infer_model_name,
