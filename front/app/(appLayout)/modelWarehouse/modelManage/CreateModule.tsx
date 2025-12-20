@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { v4 as uuid4 } from 'uuid'
 import { Button, Form, Image, Input, Modal, Select, Space, Tooltip, Upload, message } from 'antd'
 import { DeleteOutlined, ExclamationCircleOutlined, InboxOutlined, LoadingOutlined, PlusOutlined } from '@ant-design/icons' // QuestionCircleOutlined
@@ -24,6 +24,61 @@ const { Dragger } = Upload
 const CHUNK_SIZE = 5 * 1024 * 1024 // 每个分片的大小为 5MB
 const uniqueId = uuid4()
 const { Option } = Select
+
+type RecommendResult = { framework?: string, endpoint?: string }
+const normalizeStr = (s?: any) => String(s || '').trim()
+const recommendFrameworkEndpoint = (modelKind?: string, modelName?: string): RecommendResult => {
+  const kind = normalizeStr(modelKind)
+  const name = normalizeStr(modelName).toLowerCase()
+
+  // 优先按模型名特征判断（覆盖 kind 默认）
+  if (name.includes('deepseek-r1') || name.includes('r1-distill')) {
+    return { framework: 'VLLM', endpoint: '/generate' }
+  }
+  if (name.includes('deepseek-ocr')) {
+    return { framework: 'DeepSeekOCRDeploy', endpoint: '/generate' }
+  }
+  if (name.includes('reranker')) {
+    return { framework: 'RerankerDeploy', endpoint: '/generate' }
+  }
+  if (name.includes('embedding') || name.includes('bge')) {
+    return { framework: 'EmbeddingDeploy', endpoint: '/generate' }
+  }
+  if (name.includes('ocr')) {
+    return { framework: 'OCRDeploy', endpoint: '/generate' }
+  }
+  if (name.includes('sensevoice')) {
+    return { framework: 'SenseVoiceDeploy', endpoint: '/generate' }
+  }
+  if (name.includes('chattts')) {
+    return { framework: 'ChatTTSDeploy', endpoint: '/generate' }
+  }
+  if (name.includes('vl') || name.includes('vqa') || name.includes('vision')) {
+    return { framework: 'LMDeploy', endpoint: '/v1/chat/interactive' }
+  }
+
+  // 按模型类别默认推荐
+  switch (kind) {
+    case 'localLLM':
+    case 'OnlineLLM':
+      return { framework: 'VLLM', endpoint: '/generate' }
+    case 'VQA':
+      return { framework: 'LMDeploy', endpoint: '/v1/chat/interactive' }
+    case 'Embedding':
+      return { framework: 'EmbeddingDeploy', endpoint: '/generate' }
+    case 'reranker':
+      return { framework: 'RerankerDeploy', endpoint: '/generate' }
+    case 'STT':
+      return { framework: 'SenseVoiceDeploy', endpoint: '/generate' }
+    case 'TTS':
+      return { framework: 'ChatTTSDeploy', endpoint: '/generate' }
+    case 'OCR':
+      return { framework: 'OCRDeploy', endpoint: '/generate' }
+    // SD 等暂不做强推荐，保留为空，用户手动选择
+    default:
+      return { framework: undefined, endpoint: undefined }
+  }
+}
 const CreateModal = (props: any) => {
   const { visible, onClose, onSuccess, data, modelType, gettaglist } = props
   const selfRef = useRef({ uploadTasks: {}, maxProgress: {}, activeXHRs: {} })
@@ -43,6 +98,33 @@ const CreateModal = (props: any) => {
   const [form] = Form.useForm()
   const token = localStorage.getItem('console_token')
   const authRadio = useRadioAuth()
+  const recommendTouchedRef = useRef({ framework: false, endpoint: false })
+  const frameworkOptions = useMemo(() => ([
+    { value: 'auto', label: 'auto（自动）' },
+    { value: 'VLLM', label: 'VLLM' },
+    { value: 'LMDeploy', label: 'LMDeploy' },
+    { value: 'SenseVoiceDeploy', label: 'SenseVoiceDeploy' },
+    { value: 'Mindie', label: 'Mindie' },
+    { value: 'EmbeddingDeploy', label: 'EmbeddingDeploy' },
+    { value: 'RerankerDeploy', label: 'RerankerDeploy' },
+    { value: 'ChatTTSDeploy', label: 'ChatTTSDeploy' },
+    { value: 'OCRDeploy', label: 'OCRDeploy' },
+    { value: 'DeepSeekOCRDeploy', label: 'DeepSeekOCRDeploy' },
+  ]), [])
+
+  const applyRecommend = (force = false) => {
+    const kind = form.getFieldValue('model_kind')
+    const name = form.getFieldValue('model_name')
+    const rec = recommendFrameworkEndpoint(kind, name)
+
+    const canSetFramework = force || !recommendTouchedRef.current.framework
+    const canSetEndpoint = force || !recommendTouchedRef.current.endpoint
+
+    if (canSetFramework && rec.framework)
+      form.setFieldValue('framework', rec.framework)
+    if (canSetEndpoint && rec.endpoint)
+      form.setFieldValue('endpoint', rec.endpoint)
+  }
 
   // 清理所有上传任务和进度数据的公共函数
   const clearAllUploadData = () => {
@@ -99,6 +181,7 @@ const CreateModal = (props: any) => {
     clearAllUploadData()
     setType('local')
     form.resetFields()
+    recommendTouchedRef.current = { framework: false, endpoint: false }
     setModelFrom(undefined)
     onClose()
   }
@@ -109,6 +192,11 @@ const CreateModal = (props: any) => {
     else
       data && form.setFieldsValue(data)
   }, [visible, data, form])
+
+  useEffect(() => {
+    if (visible)
+      applyRecommend(false)
+  }, [visible])
 
   const getList = async () => {
     enum EType {
@@ -506,6 +594,14 @@ const CreateModal = (props: any) => {
       setModelKind(changedValues.model_kind)
     if (changedValues.model_brand)
       setModelBrand(changedValues.model_brand)
+
+    if (Object.prototype.hasOwnProperty.call(changedValues, 'framework'))
+      recommendTouchedRef.current.framework = true
+    if (Object.prototype.hasOwnProperty.call(changedValues, 'endpoint'))
+      recommendTouchedRef.current.endpoint = true
+
+    if (changedValues.model_kind || changedValues.model_name)
+      applyRecommend(false)
   }
   const fixData = () => {
     enum EKind {
@@ -647,6 +743,23 @@ const CreateModal = (props: any) => {
                   placeholder='请选择模型类别'
                   options={LOCAL_MODEL_KINDS}
                 />
+              </Form.Item>
+              <Form.Item
+                name="framework"
+                label={<div className="flex items-center justify-between">
+                  <span>推理框架</span>
+                  <Button type="link" size="small" onClick={() => applyRecommend(true)}>一键推荐</Button>
+                </div>}
+                tooltip="推荐规则：localLLM 默认 VLLM(/generate)，VQA 默认 LMDeploy(/v1/chat/interactive)，Embedding/Reranker/OCR/STT/TTS 走对应 Deploy(/generate)；DeepSeek-R1 系列强制推荐 VLLM。"
+              >
+                <Select placeholder="请选择推理框架" options={frameworkOptions} />
+              </Form.Item>
+              <Form.Item
+                name="endpoint"
+                label="推理端点"
+                tooltip="通常 VLLM/Deploy 系列用 /generate；LMDeploy 对话类一般用 /v1/chat/interactive。"
+              >
+                <Input placeholder="例如：/generate 或 /v1/chat/interactive" maxLength={200} />
               </Form.Item>
               <Form.Item
                 name="model_from"

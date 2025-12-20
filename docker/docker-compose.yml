@@ -4,6 +4,8 @@ x-share-env: &lazy-env
   WEB_CONSOLE_ENDPOINT: ${WEB_CONSOLE_ENDPOINT:-http://127.0.0.1:30382} # 平台登录的ip+port（例如：http://10.210.0.49:5002），密码重置时给用户发送邮件时使用，供用户跳转到该应用
   MIGRATION_ENABLED: 'true' # 当表结构有更新时，是否自动执行数据库迁移操作
   RESET_PASSWORD_TOKEN_EXPIRY_HOURS: ${RESET_PASSWORD_TOKEN_EXPIRY_HOURS:-24} # 重置密码过期时间
+  PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium # 为 STDIO 模式的 MCP 工具提供浏览器路径
+  PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
   # tidb
   DB_USERNAME: root
   DB_PASSWORD: ''
@@ -147,6 +149,10 @@ services:
       - ../back/LazyLLM/lazyllm:/usr/local/lib/python3.10/site-packages/lazyllm:cached  # 挂载 LazyLLM 源代码，用于快速测试
   web:
     # image: crpi-blsid77lj9a28n6f.cn-hangzhou.personal.cr.aliyuncs.com/lcagent/front:latest
+    # 本地开发/自定义修复：通过源码构建前端镜像，确保修改能真正生效
+    build:
+      context: ../front
+      dockerfile: Dockerfile
     image: easyagent-front:latest
     restart: always
     environment:
@@ -244,9 +250,11 @@ services:
     image: registry.cn-hangzhou.aliyuncs.com/lazyllm/mcp-echarts-mcp-echarts-sse:latest
     # lazyllm/mcp-echarts-mcp-echarts-sse:latest
     restart: always
-    command: ["node", "build/index.js", "--transport", "sse", "--port", "3033"]
+    command: ["sh", "-c", "apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont && node build/index.js --transport sse --port 3033"]
     environment:
       !!merge <<: *lazy-env
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
+      PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
     networks:
       - lazycraft-network
   web-search-sse: # 提供网络搜索的sse服务
@@ -307,6 +315,7 @@ services:
       - ./nginx/proxy.conf:/etc/nginx/proxy.conf
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./volumes/app/upload:/app/upload # 静态文件目录，部署脚本一定要放在数据盘，和后端共享
+      - /mnt/lizhipeng/nginx_ssl:/etc/nginx/ssl:ro
     depends_on:
       - api
       - web
@@ -315,6 +324,7 @@ services:
       - lazycraft-network
     ports:
       - "${PORT:-30382}:80"
+      - "${SSL_PORT:-30383}:443"
   cloud-service:
     #image: registry.cn-hangzhou.aliyuncs.com/lazyllm/lazyllm:0.6.2
     #image: crpi-blsid77lj9a28n6f.cn-hangzhou.personal.cr.aliyuncs.com/lcagent/cloud-service:latest

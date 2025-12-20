@@ -85,6 +85,8 @@ class InferModelService(db.Model):
     model_id = db.Column(db.Integer, db.ForeignKey("models_hub.id"), nullable=False)
     # 定义服务名称字段，不能为空
     name = db.Column(db.String(100), nullable=False)
+    # 推理服务占用显卡数量（用于多卡/并行推理），默认 1
+    model_num_gpus = db.Column(db.Integer, nullable=False, server_default=db.text("1"))
     # 定义创建者字段，不能为空
     created_by = db.Column(db.String(36), nullable=False)
     # 定义创建时间字段，默认值为当前UTC时间

@@ -140,7 +140,10 @@ class InferService:
         )
         logging.info(f"ams_get_url: {ams_get_url}")
         try:
-            response = requests.get(ams_get_url, timeout=5)
+            # AMS uses a lightweight token header (see AMS openapi: header "token")
+            # Use AMS_TOKEN if provided; otherwise default to "default_token" (shared workspace token).
+            headers = {"token": os.getenv("AMS_TOKEN") or "default_token"}
+            response = requests.get(ams_get_url, timeout=5, headers=headers)
             response_data = response.json()
             logging.info(f"ams get model status response: {response.status_code}")
             logging.info(f"ams_get_service_status response: {response.text}")
@@ -718,10 +721,19 @@ class InferService:
                 )
 
             for service_data in services:
+                # 显卡数量：前端可传入 model_num_gpus；默认 1
+                try:
+                    model_num_gpus = int(service_data.get("model_num_gpus") or 1)
+                except Exception:
+                    model_num_gpus = 1
+                if model_num_gpus < 1:
+                    model_num_gpus = 1
+
                 new_service = InferModelService(
                     group_id=group_id,
                     name=service_data.get("name"),
                     model_id=model_id,
+                    model_num_gpus=model_num_gpus,
                     created_by=current_user.id,
                     tenant_id=current_user.current_tenant_id,
                     updated_by=current_user.id,
@@ -884,8 +896,18 @@ class InferService:
             os.getenv("AMS_ENDPOINT") + "/v1/inference_services/" + lws_release_name
         )
         logging.info(f"ams_delete_url: {ams_delete_url}")
-        response = requests.delete(ams_delete_url)
-        response_data = response.json()
+        headers = {"token": os.getenv("AMS_TOKEN") or "default_token"}
+        response = requests.delete(ams_delete_url, headers=headers)
+        # Some AMS implementations return 404 when the job is already gone.
+        # Treat that as success to allow UI/DB cleanup.
+        if response.status_code == 404:
+            logging.info(f"ams_stop_service: job not found in AMS, treat as deleted: {lws_release_name}")
+            return True
+        response_data = {}
+        try:
+            response_data = response.json()
+        except Exception:
+            pass
         logging.info(f"ams delete response: {response.status_code}")
         logging.info(f"ams_stop_service response: {response.text}")
         if response.status_code != 200:
@@ -930,7 +952,7 @@ class InferService:
             db.session.rollback()
             raise ValueError(f"任务取消失败，id: {service.gid}") from e
 
-    def ams_start_service(self, service_name, model_name):
+    def ams_start_service(self, service_name, model_name, framework: str = "auto", model_num_gpus: int = 1):
         """通过AMS启动服务。
 
         调用AMS API启动指定的推理服务。
@@ -976,12 +998,27 @@ class InferService:
                     f"ams_start_service: 检测到绝对路径，直接使用 - model_name='{model_name}'"
                 )
         
-        json_data = {"service_name": service_name, "model_name": model_name}
+        # AMS（cloud-service）接口契约：
+        # - num_gpus: 申请/分配的 GPU 数量
+        # - framework: VLLM / LMDeploy / auto
+        try:
+            ngpus = int(model_num_gpus or 1)
+        except Exception:
+            ngpus = 1
+        if ngpus < 1:
+            ngpus = 1
+        json_data = {
+            "service_name": service_name,
+            "model_name": model_name,
+            "framework": framework or "auto",
+            "num_gpus": ngpus,
+        }
         logging.info(
             f"ams_start_service: 准备发送 JSON 数据 - {json_data}"
         )
         try:
-            response = requests.post(ams_start_server_url, json=json_data, timeout=10)
+            headers = {"token": os.getenv("AMS_TOKEN") or "default_token"}
+            response = requests.post(ams_start_server_url, json=json_data, timeout=10, headers=headers)
         except requests.exceptions.RequestException as e:
             logging.error(f"ams_start_service request failed: {str(e)}")
             logging.error(f"AMS service may not be available at {ams_start_server_url}")
@@ -1129,8 +1166,25 @@ class InferService:
                     )
             
             logging.info(f"start_service: 准备调用 ams_start_service，infer_model_name='{infer_model_name}'")
+            # framework 优先使用数据库配置；如果没有，根据 model_kind 自动设置；最后才使用 auto
+            framework = getattr(model_info, "framework", None)
+            if not framework:
+                # 根据 model_kind 自动设置 framework
+                from parts.models_hub.service import ModelService
+                model_service = ModelService(None)
+                framework, _ = model_service._get_framework_and_endpoint_by_model_kind(
+                    getattr(model_info, "model_kind", "")
+                )
+                logging.info(
+                    f"start_service: 根据 model_kind='{getattr(model_info, 'model_kind', '')}' 自动设置 framework='{framework}'"
+                )
+            if not framework:
+                framework = "auto"
             ams_start_service_result, ams_start_service_return = self.ams_start_service(
-                service.name, infer_model_name
+                service.name,
+                infer_model_name,
+                framework,
+                getattr(service, "model_num_gpus", 1) or 1,
             )
             logging.info(
                 f"ams_start_service result: {ams_start_service_result}, {ams_start_service_return}"

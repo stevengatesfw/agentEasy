@@ -6,6 +6,9 @@ import TextEditor from '../../text-composer'
 
 const FieldItem = (props) => {
   return props.value.map((_value: any, index) => {
+    // 兼容本地预览 URL（blob）和 dataURL（data:image/...）
+    if (typeof _value === 'string' && (_value.startsWith('blob:') || _value.startsWith('data:image/')))
+      return <ImagePreview key={index} {...props} value={_value} style={{ width: '100%', height: 200 }} />
     if (/\.(wav|mp3)$/.test(_value))
       return <AudioPreview key={index} {...props} value={_value} />
     else if (/\.(jpe?g|png)$/i.test(_value))

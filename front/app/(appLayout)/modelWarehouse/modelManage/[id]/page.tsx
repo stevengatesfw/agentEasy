@@ -171,6 +171,8 @@ const ModelDetail = (req) => {
             <div className={styles.detailWrap}>
               {baseInfo?.model_from && <div>模型来源：{getModelFromText(baseInfo?.model_from)}</div>}
               {baseInfo?.model_kind && <div>模型类别：{baseInfo?.model_kind_display}</div>}
+              {baseInfo?.framework && <div>推理框架：{baseInfo?.framework}</div>}
+              {baseInfo?.endpoint && <div>推理端点：{baseInfo?.endpoint}</div>}
             </div>
           </div>
           <div className='flex'>

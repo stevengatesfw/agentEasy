@@ -101,17 +101,31 @@ class AuthManager {
   }
 
   static getAgentToken(): string | null {
-    return localStorage?.getItem('agent_token') || null
+    // 兼容历史：上游默认使用登录态 token 作为 agent 身份（按账号保存历史）
+    // 未登录时再使用设备维度的 agent_token（按浏览器保存历史）
+    return localStorage?.getItem('console_token') || localStorage?.getItem('agent_token') || null
   }
 
   static setAuthHeaders(headers: Headers, isPublicAPI: boolean, isAgent?: boolean): void {
+    // Agent 页：必须保证 TempToken 与 Authorization（如存在）指向同一个身份，否则会出现
+    // “run 写在 A(from_who=登录态)，sessions 用 TempToken 查 B”的历史丢失现象。
+    if (isAgent) {
+      const consoleToken = localStorage?.getItem('console_token') || ''
+      const agentToken = localStorage?.getItem('agent_token') || ''
+      const unified = consoleToken || agentToken
+
+      if (unified) {
+        const normalized = unified.startsWith('Bearer ') ? unified.slice('Bearer '.length) : unified
+        headers.set('TempToken', normalized)
+        // 同时带上 Authorization（统一使用同一份 token）
+        headers.set('Authorization', `Bearer ${normalized}`)
+      }
+      return
+    }
+
     const token = this.getToken(isPublicAPI)
     if (token)
       headers.set('Authorization', `Bearer ${token}`)
-
-    const agentToken = this.getAgentToken()
-    if (isAgent && agentToken)
-      headers.set('TempToken', agentToken)
   }
 }
 
@@ -224,15 +238,27 @@ class StreamEventHandler {
       case 'start':
         callbacks.onStart?.(data)
         break
+      // 后端流式接口（AppRunService / infer-service/test/.../run）会发 result/finish/stop
+      // 其中 result 往往是“最终答案字符串”，但并不代表流结束；仍需继续读取 finish/stop
+      case 'result': {
+        const payload = data.data ?? data.answer ?? data.message ?? data
+        callbacks.onData?.(unicodeToChar(payload), isFirstMessage, moreInfo)
+        break
+      }
+      case 'success':
       case 'finish':
         callbacks.onFinish?.(data)
         break
+      case 'fail':
       case 'error':
-        callbacks.onError?.(data.data || data.message)
+        callbacks.onError?.(data.data || data.message || '请求失败')
         break
       case 'debug':
-      case 'stop':
         // 暂时不做特殊处理
+        break
+      case 'stop':
+        // stop 代表流结束（有些后端只发 stop 不再发 finish/result）
+        callbacks.onFinish?.(data)
         break
     }
   }
@@ -258,8 +284,28 @@ const handleStream = (
   let buffer = ''
   let bufferObj: Record<string, any>
   let isFirstMessage = true
+  // 兜底：有些后端会直接关闭连接而不发送 finish/stop，导致前端一直“isStreaming=true”
+  // 这里确保 onFinish 最终一定会被触发一次
+  let hasFinished = false
+
+  const originalOnFinish = callbacks.onFinish
+  const originalOnError = callbacks.onError
+  callbacks.onFinish = (finish: any) => {
+    hasFinished = true
+    originalOnFinish?.(finish)
+  }
+  callbacks.onError = (err: any, code?: any) => {
+    // onError 通常也意味着流结束
+    hasFinished = true
+    // @ts-expect-error - onError 的第二参数在部分调用场景存在
+    originalOnError?.(err, code)
+  }
 
   const processMessage = (message: string): boolean => {
+    // 一旦已结束，忽略任何后续消息，避免 onFinish 后又被 onData 把状态写回“进行中”
+    if (hasFinished)
+      return true
+
     if (!message.startsWith('data: '))
       return false
 
@@ -276,6 +322,7 @@ const handleStream = (
     }
 
     if (bufferObj.status === 400 || !bufferObj.event) {
+      callbacks.onError?.(bufferObj?.message || '请求失败', bufferObj?.code)
       callbacks.onData('', false, {
         discussionId: undefined,
         messageId: '',
@@ -302,13 +349,17 @@ const handleStream = (
     if (bufferObj.event === 'data')
       isFirstMessage = false
 
+    // 如果本条消息触发了 finish/stop/error，立刻终止后续处理
+    if (hasFinished)
+      return true
+
     return false // 无错误
   }
 
   const read = (): void => {
     reader?.read().then((result: any) => {
       if (result.done)
-        return
+        return callbacks.onFinish?.({ event: 'stop' })
 
       buffer += decoder.decode(result.value, { stream: true })
       const lines = buffer.split('\n')
@@ -324,7 +375,7 @@ const handleStream = (
 
         buffer = lines[lines.length - 1]
 
-        if (!hasError)
+        if (!hasError && !hasFinished)
           read()
       }
       catch (e) {
@@ -333,7 +384,14 @@ const handleStream = (
           messageId: '',
           errorMessage: `${e}`,
         })
+        // 发生解析异常也结束流，避免卡死
+        if (!hasFinished)
+          callbacks.onFinish?.({ event: 'stop', error: `${e}` })
       }
+    }).catch((e) => {
+      // reader.read() 本身失败也需要结束流
+      if (!hasFinished)
+        callbacks.onFinish?.({ event: 'stop', error: `${e}` })
     })
   }
 

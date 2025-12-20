@@ -67,17 +67,20 @@ const ClassifyMode = (props, ref) => {
     <div>
       <Form.Item label={props?.label || '类别'} style={{ marginBottom: 15 }} >
         <div className="labels-item-wrap" style={{ marginLeft: needSpace ? 30 : 0 }}>
-          {tagList[type]?.map((option: TagOption) => (
-            <div
-              key={option.id}
-              className={`labelItem ${getLabelsActive(option) ? 'label-active' : ''}`}
-              data-id={option.id}
-              data-name={option.name}
-              onClick={labelsClick}
-            >
-              {option.name}
-            </div>
-          ))}
+          {tagList[type]?.map((option: TagOption) => {
+            if (!option || !option.id || !option.name) return null
+            return (
+              <div
+                key={option.id}
+                className={`labelItem ${getLabelsActive(option) ? 'label-active' : ''}`}
+                data-id={option.id}
+                data-name={option.name}
+                onClick={labelsClick}
+              >
+                {option.name}
+              </div>
+            )
+          })}
         </div>
       </Form.Item>
 

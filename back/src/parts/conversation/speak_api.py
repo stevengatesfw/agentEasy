@@ -70,10 +70,19 @@ class SpeakInitApi(Resource):
         if auth_token:
             return {"token": auth_token}
 
+        # 兼容主代码：如果已有登录态 Authorization，则复用它作为会话 token，
+        # 避免每次刷新 init 都生成随机 user_id 导致 sessions/history 为空。
+        # 注意 Authorization 可能是 "Bearer <jwt>"，PassportService.verify 支持带 Bearer 前缀，
+        # 但前端存储/透传时我们统一只存 jwt 本体或带 Bearer 都可，这里直接原样返回更稳。
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header:
+            return {"token": auth_header}
+
         auth_token = request.args.get("_token")
         if auth_token:
             return {"token": auth_token}
 
+        # 设备维度（同一浏览器/同一设备）：生成游客 token（uuid）并返回，前端持久化即可刷新不丢历史
         user_id = str(uuid.uuid4())
         auth_token = PassportService().issue({"user_id": user_id})
         return {"token": auth_token}
@@ -159,6 +168,60 @@ class SpeakHistoryApi(Resource):
 
         data_list = [marshal(item, fields.speak_fields) for item in queryset]
         return {"data": data_list}
+
+
+class SpeakSessionDeleteApi(Resource):
+    """删除会话API。
+
+    用于删除指定 sessionid 的整段会话（包含用户与模型的消息）。
+    """
+
+    def delete(self, app_id, sessionid):
+        app_id = str(app_id)
+        sessionid = str(sessionid)
+
+        from_who = self.get_user()
+
+        # 只有当该 session 存在属于当前用户的消息时，才允许删除
+        owned = (
+            Conversation.query.filter_by(app_id=app_id, sessionid=sessionid, from_who=from_who)
+            .first()
+        )
+        if not owned:
+            return {"message": "session not found", "code": 404}, 404
+
+        Conversation.query.filter_by(app_id=app_id, sessionid=sessionid).delete(synchronize_session=False)
+        db.session.commit()
+        return {"result": "success"}
+
+
+class SpeakTurnDeleteApi(Resource):
+    """删除单轮对话API。
+
+    用于删除某个会话内指定 turn_number 的一轮对话（通常包含用户问题+模型回答）。
+    """
+
+    def delete(self, app_id, sessionid, turn_number):
+        app_id = str(app_id)
+        sessionid = str(sessionid)
+        turn_number = int(turn_number)
+
+        from_who = self.get_user()
+
+        owned = (
+            Conversation.query.filter_by(
+                app_id=app_id, sessionid=sessionid, from_who=from_who, turn_number=turn_number
+            )
+            .first()
+        )
+        if not owned:
+            return {"message": "turn not found", "code": 404}, 404
+
+        Conversation.query.filter_by(app_id=app_id, sessionid=sessionid, turn_number=turn_number).delete(
+            synchronize_session=False
+        )
+        db.session.commit()
+        return {"result": "success"}
 
 
 class SpeakToAppApi(Resource):
@@ -291,9 +354,11 @@ class SpeakToAppApi(Resource):
             # refresh_data["content"] = manager.stream_result  # 当前对话中将流式输出全部显示，但是历史记录中指记录最终输出
             # yield AppQueueManager.build_dict_as_message({"event": "tts_message_end", "data": refresh_data})
 
-        return Response(
-            stream_with_context(generate()), status=200, mimetype="text/event-stream"
-        )
+        resp = Response(stream_with_context(generate()), status=200, mimetype="text/event-stream")
+        # SSE 实时性：显式禁止缓冲/缓存，避免前端必须触发下一次请求才“把上一条一起显示出来”
+        resp.headers["Cache-Control"] = "no-cache"
+        resp.headers["X-Accel-Buffering"] = "no"
+        return resp
 
 
 class SpeakFeedbackApi(Resource):
@@ -359,3 +424,8 @@ api.add_resource(SpeakSessionsApi, "/conversation/<string:app_id>/sessions")
 api.add_resource(SpeakHistoryApi, "/conversation/<string:app_id>/history")
 api.add_resource(SpeakToAppApi, "/conversation/<string:app_id>/run")
 api.add_resource(SpeakFeedbackApi, "/conversation/<string:app_id>/feedback")
+api.add_resource(SpeakSessionDeleteApi, "/conversation/<string:app_id>/sessions/<string:sessionid>")
+api.add_resource(
+    SpeakTurnDeleteApi,
+    "/conversation/<string:app_id>/sessions/<string:sessionid>/turns/<int:turn_number>",
+)
