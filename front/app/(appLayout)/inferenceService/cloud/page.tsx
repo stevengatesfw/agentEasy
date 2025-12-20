@@ -7,6 +7,7 @@ import CreateModal from './CreateModule'
 import EditModel from './EditModel'
 import { getModelInfo, getModelListNew } from '@/infrastructure/api/modelWarehouse'
 import { deleteModelList } from '@/infrastructure/api/user'
+import useRadioAuth from '@/shared/hooks/use-radio-auth'
 
 // 定义模型数据类型
 type ModelItemType = {
@@ -43,6 +44,8 @@ const CloudService = () => {
   const [currentModelId, setCurrentModelId] = useState<string>()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modelKey, setModelKey] = useState<string>()
+  const authRadio = useRadioAuth()
+  const canConfigure = authRadio.isAdministrator || authRadio.isSuper
 
   const onKindChange = (e: RadioChangeEvent) => {
     setKind(e.target.value)
@@ -120,11 +123,11 @@ const CloudService = () => {
 
   const handleOk = async () => {
     if (currentModelId) {
-      const res = await deleteModelList({
+      const res: any = await deleteModelList({
         model_id: currentModelId,
         model_keys: [modelKey],
       })
-      if (res.success) {
+      if (res?.success) {
         // 成功提醒
         message.success(res.message)
         // 刷新列表数据
@@ -132,7 +135,7 @@ const CloudService = () => {
         if (expandedRowDetails[currentModelId])
           await fetchModelDetail(currentModelId)
       }
-      else { message.error(res.message) }
+      else { message.error(res?.message || '删除失败') }
     }
     setIsModalOpen(false)
   }
@@ -198,9 +201,16 @@ const CloudService = () => {
 
       </Card>
 
-      <Card title={`${kind} 模型列表`} extra={<Button type="link" onClick={() => {
-        setEditModelVisible(true)
-      }}>key</Button>}>
+      <Card 
+        title={`${kind} 模型列表`} 
+        extra={
+          canConfigure && (
+            <Button type="link" onClick={() => {
+              setEditModelVisible(true)
+            }}>key</Button>
+          )
+        }
+      >
         <Table
           showHeader={false}
           columns={columns}
