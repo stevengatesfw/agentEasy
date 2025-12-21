@@ -473,35 +473,26 @@ class ModelService:
         admin_ids = Account.get_super_ids()
         is_admin = self.account.id in admin_ids
         
-        # administrator 和 admin 的租户ID，优先使用 administrator
-        administrator_tenant_id = Account.get_administrator_id()
-        admin_tenant_ids = [administrator_tenant_id, Account.get_admin_id()]
-        # 如果当前用户是 admin，优先使用 administrator 的租户ID，否则使用当前用户的租户ID
-        target_tenant_id = administrator_tenant_id if is_admin else self.account.current_tenant_id
+        # 只有 admin/administrator 可以配置 API key
+        if not is_admin:
+            raise CommonError("普通用户无权配置 API key")
+        
+        # admin/administrator 使用自己的租户ID来创建/更新配置
+        target_tenant_id = self.account.current_tenant_id
         
         for model in models:
-            # 一次查询两个租户的配置
-            configs = LazyModelConfigInfo.query.filter(
+            # 查找当前用户（admin 或 administrator）自己的配置
+            config = LazyModelConfigInfo.query.filter(
                 LazyModelConfigInfo.model_id == model.id,
-                LazyModelConfigInfo.tenant_id.in_(admin_tenant_ids),
-                LazyModelConfigInfo.user_id.in_(admin_ids),
-            ).all()
-            
-            # 优先使用 administrator 的配置
-            config = None
-            if configs:
-                for cfg in configs:
-                    if cfg.tenant_id == administrator_tenant_id:
-                        config = cfg
-                        break
-                if not config:
-                    config = configs[0]
+                LazyModelConfigInfo.tenant_id == target_tenant_id,
+                LazyModelConfigInfo.user_id == self.account.id,
+            ).first()
 
             if config:
-                # 更新 admin 的配置
+                # 更新当前用户的配置
                 config.api_key = api_key
             else:
-                # 找不到 admin 的配置，说明没有配置过，创建新的配置（优先使用 administrator 的租户ID）
+                # 找不到当前用户的配置，创建新的配置
                 config = LazyModelConfigInfo(
                     user_id=self.account.id,
                     model_id=model.id,
