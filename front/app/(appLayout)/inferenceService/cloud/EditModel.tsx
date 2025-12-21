@@ -1,12 +1,16 @@
 import React from 'react'
-import { Form, Input, Modal } from 'antd'
-import { editModel } from '@/infrastructure/api/modelWarehouse'
+import { Form, Input, Modal, Popconfirm, Button, Space } from 'antd'
+import { editModel, deleteApiKey } from '@/infrastructure/api/modelWarehouse'
 import Toast, { ToastTypeEnum } from '@/app/components/base/flash-notice'
+import useRadioAuth from '@/shared/hooks/use-radio-auth'
 
 const ModalList = (props: any) => {
   const { visible, onClose, onSuccess, data, kind } = props
   const [form] = Form.useForm()
-
+  const authRadio = useRadioAuth()
+  // 只有 administrator 或 admin 可以配置和删除 API key
+  const canConfigure = authRadio.isAdministrator || authRadio.isSuper
+  const canDelete = canConfigure
   const handleOk = async () => {
     try {
       const values = await form.validateFields()
@@ -19,6 +23,23 @@ const ModalList = (props: any) => {
       console.error(error)
     }
   }
+
+  const handleDelete = async () => {
+    try {
+      await deleteApiKey({ url: '/mh/update_apikey', body: { model_brand: kind } })
+      Toast.notify({ type: ToastTypeEnum.Success, message: '删除成功' })
+      onSuccess()
+      form.resetFields()
+      onClose()
+    }
+    catch (error: any) {
+      Toast.notify({ 
+        type: ToastTypeEnum.Error, 
+        message: error?.message || '删除失败，请稍后重试' 
+      })
+    }
+  }
+
   const handleCancel = () => {
     form.resetFields()
     onClose()
@@ -38,8 +59,41 @@ const ModalList = (props: any) => {
     return Promise.resolve()
   }
 
+  // 普通用户无权配置，直接返回 null
+  if (!canConfigure) {
+    return null
+  }
+
   return (
-    <Modal title="设置" destroyOnClose open={visible} onOk={handleOk} onCancel={handleCancel} cancelText='取消' okText='保存'>
+    <Modal 
+      title="设置" 
+      destroyOnClose 
+      open={visible} 
+      onOk={handleOk} 
+      onCancel={handleCancel} 
+      cancelText='取消' 
+      okText='保存'
+      footer={
+        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+          {canDelete && (
+            <Popconfirm
+              title="删除 API Key 配置"
+              description="确定要删除该厂商的 API Key 配置吗？删除后该工作空间内所有用户将无法使用此厂商的模型。"
+              onConfirm={handleDelete}
+              okText="确定"
+              cancelText="取消"
+              okButtonProps={{ danger: true }}
+            >
+              <Button danger>删除 API Key</Button>
+            </Popconfirm>
+          )}
+          <Space>
+            <Button onClick={handleCancel}>取消</Button>
+            <Button type="primary" onClick={handleOk}>保存</Button>
+          </Space>
+        </Space>
+      }
+    >
       <Form
         form={form}
         layout="horizontal"

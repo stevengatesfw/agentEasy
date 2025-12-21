@@ -1,5 +1,5 @@
 import type { Fetcher } from 'swr'
-import { get, post } from './base'
+import { get, post, del } from './base'
 import type { AiToolsBody, ApiResponse, BaseResponse, EnableAiBody } from '@/core/data/common'
 
 export const toggleAiStatus: Fetcher<ApiResponse, { url: string; body: EnableAiBody }> = ({ url, body }) => {
@@ -38,4 +38,12 @@ export const getModelInfo: Fetcher<BaseResponse, { url: string; options: { param
 
 export const getModelListNew: Fetcher<BaseResponse, { url: string; body: any }> = ({ url, body }) => {
   return post<BaseResponse>(url, { body })
+}
+
+export const deleteApiKey: Fetcher<BaseResponse, { url: string; body: any }> = ({ url, body }) => {
+  return del<BaseResponse>(url, { body })
+}
+
+export const checkAdminApiKeyConfigured: Fetcher<BaseResponse, { url: string; options: { params: any } }> = ({ url, options }) => {
+  return get<BaseResponse>(url, options)
 }

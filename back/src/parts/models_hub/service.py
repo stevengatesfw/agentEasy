@@ -468,22 +468,35 @@ class ModelService:
             Lazymodel.model_brand == model_brand, Lazymodel.model_type == "online"
         ).all()
         api_key = api_key if api_key else ""
+        
+        # 检查当前用户是否是 admin/administrator
+        admin_ids = Account.get_super_ids()
+        is_admin = self.account.id in admin_ids
+        
+        # 只有 admin/administrator 可以配置 API key
+        if not is_admin:
+            raise CommonError("普通用户无权配置 API key")
+        
+        # admin/administrator 使用自己的租户ID来创建/更新配置
+        target_tenant_id = self.account.current_tenant_id
+        
         for model in models:
-            # 检查 LazyModelConfigInfo 中是否已有该模型的配置
+            # 查找当前用户（admin 或 administrator）自己的配置
             config = LazyModelConfigInfo.query.filter(
                 LazyModelConfigInfo.model_id == model.id,
-                LazyModelConfigInfo.tenant_id == self.account.current_tenant_id,
+                LazyModelConfigInfo.tenant_id == target_tenant_id,
+                LazyModelConfigInfo.user_id == self.account.id,
             ).first()
 
             if config:
-                # 更新 api_key
+                # 更新当前用户的配置
                 config.api_key = api_key
             else:
-                # 新增配置
+                # 找不到当前用户的配置，创建新的配置
                 config = LazyModelConfigInfo(
                     user_id=self.account.id,
                     model_id=model.id,
-                    tenant_id=self.account.current_tenant_id,
+                    tenant_id=target_tenant_id,
                     api_key=api_key,
                 )
                 db.session.add(config)
@@ -523,6 +536,46 @@ class ModelService:
             ).delete()
         db.session.commit()
         return "API key 已清除"
+
+    def check_admin_api_key_configured(self, model_brand):
+        """检查指定厂商的 administrator/admin 是否已配置 API key。
+        
+        Args:
+            model_brand (str): 模型品牌。
+            
+        Returns:
+            bool: 如果 administrator/admin 已配置返回 True，否则返回 False。
+        """
+        models = Lazymodel.query.filter(
+            Lazymodel.model_brand == model_brand, Lazymodel.model_type == "online"
+        ).all()
+        if not models:
+            return False
+        
+        admin_ids = Account.get_super_ids()
+        # administrator 和 admin 的租户ID，优先使用 administrator
+        administrator_tenant_id = Account.get_administrator_id()
+        admin_tenant_ids = [administrator_tenant_id, Account.get_admin_id()]
+        
+        for model in models:
+            # 一次查询两个租户的配置
+            configs = LazyModelConfigInfo.query.filter(
+                LazyModelConfigInfo.model_id == model.id,
+                LazyModelConfigInfo.tenant_id.in_(admin_tenant_ids),
+                LazyModelConfigInfo.user_id.in_(admin_ids),
+                or_(
+                    LazyModelConfigInfo.api_key != "",
+                    LazyModelConfigInfo.proxy_url != "",
+                ),
+            ).all()
+            # 优先检查 administrator 的配置
+            if configs:
+                for config in configs:
+                    if config.tenant_id == administrator_tenant_id:
+                        return True
+                # 如果没有 administrator 的，返回 admin 的
+                return True
+        return False
 
     def _get_framework_and_endpoint_by_model_kind(self, model_kind):
         """根据 model_kind 自动获取 framework 和 endpoint。
@@ -1632,14 +1685,35 @@ class ModelService:
         tenant_id = current_user.current_tenant_id if current_user else admin_account.current_tenant_id
         model_instance = Lazymodel.query.filter(Lazymodel.id == online_id).first()
         model_brand = model_instance.model_brand if model_instance else None
-        model_config = LazyModelConfigInfo.query.filter(
+        
+        # administrator 和 admin 的租户ID，优先使用 administrator
+        administrator_tenant_id = Account.get_administrator_id()
+        admin_tenant_ids = [tenant_id, administrator_tenant_id, Account.get_admin_id()]
+        
+        # 一次查询多个租户的配置，优先返回 administrator 的
+        configs = LazyModelConfigInfo.query.filter(
             LazyModelConfigInfo.model_id == online_id,
-            LazyModelConfigInfo.tenant_id == tenant_id,
+            LazyModelConfigInfo.tenant_id.in_(admin_tenant_ids),
             or_(
                 LazyModelConfigInfo.api_key != "",
                 LazyModelConfigInfo.proxy_url != "",
             ),
-        ).first()
+        ).all()
+        
+        # 优先使用 administrator 的配置，其次 admin，最后当前用户的
+        model_config = None
+        if configs:
+            for cfg in configs:
+                if cfg.tenant_id == administrator_tenant_id:
+                    model_config = cfg
+                    break
+            if not model_config:
+                for cfg in configs:
+                    if cfg.tenant_id == Account.get_admin_id():
+                        model_config = cfg
+                        break
+            if not model_config:
+                model_config = configs[0]
         if model_config is not None:
             split_keys = model_config.api_key.split(":")
             proxy_url = model_config.proxy_url
@@ -1759,6 +1833,9 @@ class ModelService:
                     Lazymodel.user_id == Account.get_administrator_id(),
                 )
             )
+            # administrator 和 admin 配置的 API key，需要同时查询当前租户、administrator 租户和 admin 租户
+            administrator_tenant_id = Account.get_administrator_id()  # '00000000-0000-0000-0000-000000000000'
+            admin_tenant_id = Account.get_admin_id()  # '00000000-0000-0000-0000-000000000001'
             filters.append(
                 or_(
                     Lazymodel.model_type == "local",
@@ -1766,8 +1843,11 @@ class ModelService:
                         Lazymodel.model_type == "online",
                         exists().where(
                             LazyModelConfigInfo.model_id == Lazymodel.id,
-                            LazyModelConfigInfo.tenant_id
-                            == self.account.current_tenant_id,
+                            or_(
+                                LazyModelConfigInfo.tenant_id == self.account.current_tenant_id,
+                                LazyModelConfigInfo.tenant_id == administrator_tenant_id,
+                                LazyModelConfigInfo.tenant_id == admin_tenant_id,
+                            ),
                              or_(
                                 LazyModelConfigInfo.api_key != "",
                                 LazyModelConfigInfo.proxy_url != "",

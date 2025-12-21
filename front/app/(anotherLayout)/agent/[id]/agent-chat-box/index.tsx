@@ -5,6 +5,7 @@ import { DeleteOutlined, EditOutlined, RedoOutlined, UserOutlined } from '@ant-d
 import { useKeyPress } from 'ahooks'
 import Image from 'next/image'
 import { v4 as uuidV4 } from 'uuid'
+import copy from 'copy-to-clipboard'
 import { message } from 'antd/lib'
 import styles from './index.module.scss'
 import { API_PREFIX } from '@/app-specs'
@@ -344,6 +345,15 @@ const AgentChatBox = ({ agentId, sidebar, draft, currentChatId, onChatIdChange }
     setShowLogic(false)
     onChatIdChange?.(chatId)
   }
+
+  const handleCopy = (content: string) => {
+    if (!content)
+      return
+    const textToCopy = content.replace(/\\n/g, '\n')
+    copy(textToCopy)
+    message.success('复制成功')
+  }
+
   const fileChange = (res) => {
     if (res?.file?.status === 'removed')
       setFileUrl(undefined)
@@ -469,6 +479,13 @@ const AgentChatBox = ({ agentId, sidebar, draft, currentChatId, onChatIdChange }
 
                             {isLazyllm && !detailData.isStreaming && <div className={styles.evaluate}>
                               <div className={styles.options}>
+                                <HoverGuide popupContent="复制内容">
+                                  <Icon
+                                    type="icon-fuzhi"
+                                    style={{ fontSize: '20px', color: '#999', marginRight: '15px', cursor: 'pointer' }}
+                                    onClick={() => handleCopy(item.content || detailData.result)}
+                                  />
+                                </HoverGuide>
                                 <Icon
                                   type={item.is_satisfied ? 'icon-dianzan-click' : 'icon-dianzan'}
                                   style={{ fontSize: '20px', color: item.is_satisfied ? 'rgb(14,93,216)' : '#999', marginRight: '15px', cursor: 'pointer' }}
