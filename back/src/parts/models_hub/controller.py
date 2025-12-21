@@ -417,6 +417,23 @@ class ModelHubUpdateApiKeyApi(Resource):
         result = service.clear_api_key(data["model_brand"])
         return {"status": "success", "result": result}
 
+    @login_required
+    def get(self):
+        """检查指定厂商的 administrator/admin 是否已配置 API key。
+        
+        Args:
+            model_brand (str): 模型品牌（必需）。
+            
+        Returns:
+            dict: 包含配置状态的字典，{"configured": True/False}。
+        """
+        parser = reqparse.RequestParser()
+        parser.add_argument("model_brand", type=str, required=True, location="args")
+        data = parser.parse_args()
+        service = ModelService(current_user)
+        is_configured = service.check_admin_api_key_configured(data["model_brand"])
+        return {"status": "success", "configured": is_configured}
+
 
 class modelHubDeleteApi(Resource):
     @login_required

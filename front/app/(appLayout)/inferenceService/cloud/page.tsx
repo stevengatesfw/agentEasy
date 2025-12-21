@@ -5,7 +5,7 @@ import type { RadioChangeEvent } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import CreateModal from './CreateModule'
 import EditModel from './EditModel'
-import { getModelInfo, getModelListNew } from '@/infrastructure/api/modelWarehouse'
+import { getModelInfo, getModelListNew, checkAdminApiKeyConfigured } from '@/infrastructure/api/modelWarehouse'
 import { deleteModelList } from '@/infrastructure/api/user'
 import useRadioAuth from '@/shared/hooks/use-radio-auth'
 
@@ -44,9 +44,9 @@ const CloudService = () => {
   const [currentModelId, setCurrentModelId] = useState<string>()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modelKey, setModelKey] = useState<string>()
+  const [adminApiKeyStatus, setAdminApiKeyStatus] = useState<Record<string, boolean>>({})
   const authRadio = useRadioAuth()
   const canConfigure = authRadio.isAdministrator || authRadio.isSuper
-
   const onKindChange = (e: RadioChangeEvent) => {
     setKind(e.target.value)
   }
@@ -78,12 +78,37 @@ const CloudService = () => {
         const uniqueBrandList = [...new Set(brandList)]
         setBrandList(uniqueBrandList)
         setList(res.data)
+        
+        // 如果是普通用户，检查每个厂商的 admin 配置状态
+        if (!canConfigure) {
+          const checkPromises = uniqueBrandList.map(async (brand) => {
+            try {
+              const statusRes: any = await checkAdminApiKeyConfigured({
+                url: '/mh/update_apikey',
+                options: {
+                  params: { model_brand: brand },
+                },
+              })
+              return { brand, configured: statusRes?.configured ?? false }
+            }
+            catch (error) {
+              console.error(`检查 ${brand} 的 admin API key 配置失败:`, error)
+              return { brand, configured: false }
+            }
+          })
+          const statusResults = await Promise.all(checkPromises)
+          const statusMap: Record<string, boolean> = {}
+          statusResults.forEach(({ brand, configured }) => {
+            statusMap[brand] = configured
+          })
+          setAdminApiKeyStatus(statusMap)
+        }
       }
     }
     catch (error) {
       console.error('获取模型列表失败:', error)
     }
-  }, [])
+  }, [canConfigure])
 
   // 组件挂载时加载数据
   useEffect(() => {
@@ -155,7 +180,13 @@ const CloudService = () => {
       title: '状态',
       dataIndex: 'model_status',
       key: 'model_status',
-      render: (status: string) => {
+          render: (status: string, record: ModelItemType) => {
+            // 如果是普通用户，根据 admin 配置状态显示
+            if (!canConfigure) {
+              const isAdminConfigured = adminApiKeyStatus[record.model_brand] ?? false
+              return isAdminConfigured ? 'key验证通过' : 'key未验证'
+            }
+        // 如果是 admin，使用后端返回的状态
         const statusMap: Record<string, string> = {
           1: 'key未验证',
           2: 'key验证中',
@@ -204,11 +235,14 @@ const CloudService = () => {
       <Card 
         title={`${kind} 模型列表`} 
         extra={
-          canConfigure && (
+          canConfigure ? (
             <Button type="link" onClick={() => {
-              setEditModelVisible(true)
+              // 双重检查权限，防止权限判断延迟导致的问题
+              if (authRadio.isAdministrator || authRadio.isSuper) {
+                setEditModelVisible(true)
+              }
             }}>key</Button>
-          )
+          ) : null
         }
       >
         <Table
@@ -282,17 +316,24 @@ const CloudService = () => {
           scroll={{ x: 800 }}
         />
       </Card>
-      <EditModel
-        visible={editModelVisible}
-        onClose={() => setEditModelVisible(false)}
-        data={item}
-        kind={kind}
-        onSuccess={() => {
-          setEditModelVisible(false)
-          fetchData()
-        }}
-        onCancel={() => setEditModelVisible(false)}
-      />
+      {/* 只有管理员才能渲染 EditModel 组件 */}
+      {canConfigure && (
+        <EditModel
+          visible={editModelVisible}
+          onClose={() => setEditModelVisible(false)}
+          data={item}
+          kind={kind}
+          onSuccess={() => {
+            setEditModelVisible(false)
+            fetchData()
+            // 刷新后重新检查 admin 配置状态
+            if (!canConfigure) {
+              setAdminApiKeyStatus({})
+            }
+          }}
+          onCancel={() => setEditModelVisible(false)}
+        />
+      )}
       <CreateModal
         visible={createModalVisible}
         onClose={() => {

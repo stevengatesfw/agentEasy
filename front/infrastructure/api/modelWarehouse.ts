@@ -43,3 +43,7 @@ export const getModelListNew: Fetcher<BaseResponse, { url: string; body: any }> 
 export const deleteApiKey: Fetcher<BaseResponse, { url: string; body: any }> = ({ url, body }) => {
   return del<BaseResponse>(url, { body })
 }
+
+export const checkAdminApiKeyConfigured: Fetcher<BaseResponse, { url: string; options: { params: any } }> = ({ url, options }) => {
+  return get<BaseResponse>(url, options)
+}

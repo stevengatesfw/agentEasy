@@ -11,7 +11,6 @@ const ModalList = (props: any) => {
   // 只有 administrator 或 admin 可以配置和删除 API key
   const canConfigure = authRadio.isAdministrator || authRadio.isSuper
   const canDelete = canConfigure
-
   const handleOk = async () => {
     try {
       const values = await form.validateFields()
@@ -60,11 +59,8 @@ const ModalList = (props: any) => {
     return Promise.resolve()
   }
 
-  // 如果普通用户误打开，直接关闭
-  if (!canConfigure && visible) {
-    setTimeout(() => {
-      handleCancel()
-    }, 0)
+  // 普通用户无权配置，直接返回 null
+  if (!canConfigure) {
     return null
   }
 
@@ -72,7 +68,7 @@ const ModalList = (props: any) => {
     <Modal 
       title="设置" 
       destroyOnClose 
-      open={visible && canConfigure} 
+      open={visible} 
       onOk={handleOk} 
       onCancel={handleCancel} 
       cancelText='取消' 

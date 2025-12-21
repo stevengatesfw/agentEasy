@@ -106,7 +106,11 @@ const nextConfig = {
   ...(process.env.NODE_ENV === 'production' && !process.env.TURBOPACK && {
     compiler: {
       // 移除 console.log (仅生产环境，且非 Turbopack 模式)
-      removeConsole: true,
+      // 临时禁用以调试权限问题
+      // removeConsole: true,
+      removeConsole: {
+        exclude: ['log', 'warn', 'error'], // 保留所有 console，用于调试
+      },
     },
   }),
   async redirects() {
