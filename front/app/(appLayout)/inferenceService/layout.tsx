@@ -2,35 +2,44 @@
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import IconFont from '@/app/components/base/iconFont'
+import { usePermitCheck } from '@/app/components/app/permit-check'
+
 const menuItems = [
   {
     key: 'platformService',
     label: '推理服务',
     path: '/inferenceService/platform',
     icon: () => <IconFont type="icon-shezhi2" style={{ fontSize: '24px' }}/>,
+    permissionCode: null,
   },
   {
     key: 'cloudService',
     label: '厂商配置',
     path: '/inferenceService/cloud',
     icon: () => <IconFont type="icon-a-yunduanyunfuwu" style={{ fontSize: '24px' }}/>,
+    permissionCode: 'AUTH_VENDOR_CONFIG',
   },
 ]
 
 const InferenceService = ({ children }) => {
   const [activeMenu, setActiveMenu] = useState<string>('platformService')
+  const { hasPermit } = usePermitCheck()
 
   useEffect(() => {
     const path = window.location.pathname
     const activeMenu = menuItems.find(item => item.path === path)?.key
     setActiveMenu(activeMenu || 'platformService')
   }, [])
+
+  // 根据权限过滤菜单项
+  const visibleMenuItems = menuItems.filter(item => !item.permissionCode || hasPermit(item.permissionCode))
+
   return (
     <div className='flex flex-row h-screen'>
       {/* 侧边栏，最小宽度为100px */}
       <div className='w-48 bg-gray-50 border-r border-gray-200 flex flex-col min-w-[100px] flex-shrink-0'>
         <div className='flex flex-col py-4'>
-          {menuItems.map((item) => {
+          {visibleMenuItems.map((item) => {
             const IconComponent = item.icon
             const isActive = activeMenu === item.key
 

@@ -363,6 +363,18 @@ const menuList = [
       },
     ],
   },
+  {
+    title: '模型推理',
+    roles: allRoles,
+    code: 'AUTH_8000',
+    children: [
+      {
+        title: '厂商配置',
+        code: 'AUTH_VENDOR_CONFIG',
+        roles: `${ADMINISTRATOR}:${SUPER}`,
+      },
+    ],
+  },
 ]
 
 const permitInventory = [ADMINISTRATOR, SUPER, OWNER, ADMIN, NORMAL, READONLY].map((item) => {
