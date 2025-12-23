@@ -19,6 +19,7 @@ type ResultOutputProps = {
 
 const AUDIO_EXTENSIONS = /\.(wav|mp3|m4a|ogg|flac)$/i
 const IMAGE_EXTENSIONS = /\.(jpe?g|png|gif|bmp|webp|svg)$/i
+const VIDEO_EXTENSIONS = /\.(mp4|avi|mov|wmv|flv|webm|mkv)$/i
 
 const isFileType = (output: any, regex: RegExp): boolean => {
   if (Array.isArray(output) && output.length > 0)
@@ -36,7 +37,8 @@ const ResultOutput: FC<ResultOutputProps> = ({ output, varOutput }) => {
 
   const isAudioFile = isFileType(output, AUDIO_EXTENSIONS)
   const isImageFile = isFileType(output, IMAGE_EXTENSIONS)
-  const isMediaFile = isAudioFile || isImageFile
+  const isVideoFile = isFileType(output, VIDEO_EXTENSIONS)
+  const isMediaFile = isAudioFile || isImageFile || isVideoFile
 
   const getFieldType = () => {
     if (isMediaFile)

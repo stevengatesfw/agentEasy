@@ -350,7 +350,40 @@ services:
       LAZYLLM_MODEL_PATH: /mnt/lustre/share_data/models:/mnt/lustre/share_data/lazycraft/exist_model/models_hub
     entrypoint: >
       /bin/bash -lc "
-        /opt/conda/envs/lcagent-core/bin/python -c 'import lazyllm; from lazyllm.tools.infer_service.serve import InferServer; from lazyllm.tools.train_service.serve import TrainServer; inference_service = lazyllm.ServerModule(InferServer(), port=\"31340\", launcher=lazyllm.launcher.EmptyLauncher(sync=False, ngpus=0)); inference_service.start()(); train_service = lazyllm.ServerModule(TrainServer(), port=\"31341\", launcher=lazyllm.launcher.EmptyLauncher(sync=False, ngpus=0)); train_service.start()(); inference_service.wait(); train_service.wait()' &&
+        # 安装兼容的 PyTorch 2.9.0、vllm 0.11.1 和 flash-attn
+        python -c 'import torch; import vllm; torch_ok = torch.__version__.startswith(\"2.9.0\"); vllm_ok = vllm.__version__.startswith(\"0.11.1\"); exit(0 if (torch_ok and vllm_ok) else 1)' 2>/dev/null || (
+          echo 'Fixing PyTorch, vllm, and flash-attn versions for compatibility...' &&
+          # 安装 PyTorch 2.9.0+cu126（vllm 0.11.1 要求，使用镜像源）
+          python -c 'import torch; version = torch.__version__; expected = \"2.9.0\"; exit(0 if version.startswith(expected) else 1)' 2>/dev/null || (
+            echo 'Installing PyTorch 2.9.0+cu126 from mirror...' &&
+            pip install --quiet --no-cache-dir 'torch==2.9.0+cu126' 'torchvision==0.24.0+cu126' 'torchaudio==2.9.0+cu126' --index-url https://mirrors.nju.edu.cn/pytorch/whl/cu126 2>&1 | grep -v '^WARNING' | tail -3 || true
+          ) &&
+          # 安装 vllm 0.11.1（支持 deepseek_ocr 和 PyTorch 2.9.0）
+          python -c 'import vllm; version = vllm.__version__; expected = \"0.11.1\"; exit(0 if version.startswith(expected) else 1)' 2>/dev/null || (
+            echo 'Installing vllm 0.11.1 (compatible with PyTorch 2.9.0)...' &&
+            pip uninstall -y vllm 2>/dev/null || true &&
+            pip install --quiet --no-cache-dir 'vllm==0.11.1' 2>&1 | grep -v '^WARNING' | tail -3 || true
+          ) &&
+          # 从源码编译安装 flash-attn 以匹配 PyTorch 2.9.0（需要 CUDA 12.6 工具包和 ninja）
+          python -c 'import flash_attn; from flash_attn import flash_attn_varlen_func' 2>/dev/null || (
+            echo 'Compiling flash-attn from source for PyTorch 2.9.0...' &&
+            pip uninstall -y flash-attn 2>/dev/null || true &&
+            # 安装编译依赖
+            pip install --quiet --no-cache-dir ninja packaging 2>&1 | tail -2 || true &&
+            # 确保 CUDA 环境变量正确设置
+            export CUDA_HOME=/usr/local/cuda-12.6 && export PATH=$CUDA_HOME/bin:$PATH && export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH && export CPATH=$CUDA_HOME/include:$CPATH &&
+            pip install --no-build-isolation --no-cache-dir 'git+https://github.com/Dao-AILab/flash-attention.git' 2>&1 | tail -20 || echo 'Warning: flash-attn compilation may have failed, but continuing...'
+          ) &&
+          # 安装 deepseek_vl 模块及其依赖（用于 v1 服务）
+          python -c 'import deepseek_vl; from attrdict import AttrDict' 2>/dev/null || (
+            echo 'Installing deepseek_vl and attrdict3 for DeepSeek-VL models...' &&
+            pip install --no-cache-dir attrdict3 2>&1 | tail -3 || true &&
+            # 创建 attrdict 兼容层（attrdict3 兼容 Python 3.10+）
+            python -c 'import attrdict3; open(\"/usr/local/lib/python3.10/dist-packages/attrdict.py\", \"w\").write(\"from attrdict3 import *\\nfrom attrdict3 import AttrDict\\n\")' 2>/dev/null || true &&
+            pip install --no-cache-dir 'git+https://bgithub.xyz/deepseek-ai/DeepSeek-VL.git@main#egg=deepseek_vl' --no-deps 2>&1 | tail -5 || echo 'Warning: deepseek_vl installation may have failed, but continuing...'
+          )
+        ) &&
+        /usr/bin/python -c 'import lazyllm; from lazyllm.tools.infer_service.serve import InferServer; from lazyllm.tools.train_service.serve import TrainServer; inference_service = lazyllm.ServerModule(InferServer(), port=\"31340\", launcher=lazyllm.launcher.EmptyLauncher(sync=False, ngpus=0)); inference_service.start()(); train_service = lazyllm.ServerModule(TrainServer(), port=\"31341\", launcher=lazyllm.launcher.EmptyLauncher(sync=False, ngpus=0)); train_service.start()(); inference_service.wait(); train_service.wait()' &&
         tail -f /dev/null
       "        
     volumes:
