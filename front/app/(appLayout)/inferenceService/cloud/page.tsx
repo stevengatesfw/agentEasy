@@ -7,7 +7,7 @@ import CreateModal from './CreateModule'
 import EditModel from './EditModel'
 import { getModelInfo, getModelListNew, checkAdminApiKeyConfigured } from '@/infrastructure/api/modelWarehouse'
 import { deleteModelList } from '@/infrastructure/api/user'
-import useRadioAuth from '@/shared/hooks/use-radio-auth'
+import { usePermitCheck } from '@/app/components/app/permit-check'
 
 // 定义模型数据类型
 type ModelItemType = {
@@ -45,8 +45,9 @@ const CloudService = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modelKey, setModelKey] = useState<string>()
   const [adminApiKeyStatus, setAdminApiKeyStatus] = useState<Record<string, boolean>>({})
-  const authRadio = useRadioAuth()
-  const canConfigure = authRadio.isAdministrator || authRadio.isSuper
+  const { hasPermit } = usePermitCheck()
+  const canConfigure = hasPermit('AUTH_VENDOR_CONFIG')
+
   const onKindChange = (e: RadioChangeEvent) => {
     setKind(e.target.value)
   }
@@ -237,10 +238,7 @@ const CloudService = () => {
         extra={
           canConfigure ? (
             <Button type="link" onClick={() => {
-              // 双重检查权限，防止权限判断延迟导致的问题
-              if (authRadio.isAdministrator || authRadio.isSuper) {
-                setEditModelVisible(true)
-              }
+              setEditModelVisible(true)
             }}>key</Button>
           ) : null
         }
