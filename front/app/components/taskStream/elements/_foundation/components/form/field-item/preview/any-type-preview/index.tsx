@@ -2,6 +2,7 @@
 import React from 'react'
 import ImagePreview from '../pic-overview'
 import AudioPreview from '../audio-preview'
+import VideoPreview from '../video-preview'
 import TextEditor from '../../text-composer'
 import BytesPreview from '../bytes-preview'
 import { JsonEditor } from '../../code'
@@ -12,6 +13,9 @@ const judgeType = (value: any) => {
     return undefined
 
   if (Array.isArray(value)) {
+    // 检查数组中是否包含视频文件
+    if (value.length > 0 && typeof value[0] === 'string' && /\.(mp4|avi|mov|wmv|flv|webm|mkv)$/i.test(value[0]))
+      return 'video'
     // 检查数组中是否包含音频文件
     if (value.length > 0 && typeof value[0] === 'string' && /\.(wav|mp3|m4a|ogg|flac)$/i.test(value[0]))
       return 'audio'
@@ -25,7 +29,9 @@ const judgeType = (value: any) => {
     return 'object'
 
   if (typeof value === 'string') {
-    if (/\.(wav|mp3|m4a|ogg|flac)$/i.test(value))
+    if (/\.(mp4|avi|mov|wmv|flv|webm|mkv)$/i.test(value))
+      return 'video'
+    else if (/\.(wav|mp3|m4a|ogg|flac)$/i.test(value))
       return 'audio'
     else if (/\.(jpe?g|png|gif|bmp|webp|svg)$/i.test(value))
       return 'image'
@@ -38,6 +44,9 @@ const AnyTypePreview = (props) => {
   const { value } = props
 
   const type = judgeType(value)
+
+  if (type === 'video')
+    return <VideoPreview {...props} />
 
   if (type === 'audio')
     return <AudioPreview {...props} />
