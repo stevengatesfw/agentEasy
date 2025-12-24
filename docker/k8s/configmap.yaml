@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lcagent-config
+  namespace: lcagentns-app
+data:
+  LOG_LEVEL: "INFO"
+  LAZY_PLATFORM_KEY: "sk-IrD318oX/wz8bt4Ns37OtiMEzBjvS7Ylf9ZlkFrn59XAQUyzKBs3TUnR"
+  WEB_CONSOLE_ENDPOINT: "http://127.0.0.1:30382"
+  MIGRATION_ENABLED: "true"
+  RESET_PASSWORD_TOKEN_EXPIRY_HOURS: "24"
+  PUPPETEER_EXECUTABLE_PATH: "/usr/bin/chromium"
+  PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+  # Database
+  DB_USERNAME: "root"
+  DB_PASSWORD: ""
+  DB_HOST: "tidb"
+  DB_PORT: "4000"
+  DB_DATABASE: "lcagent"
+  # Redis
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  REDIS_USERNAME: ""
+  REDIS_PASSWORD: "lazyai123456"
+  REDIS_USE_SSL: "false"
+  REDIS_DB: "0"
+  CELERY_BROKER_URL: "redis://:lazyai123456@redis:6379/1"
+  # Storage
+  STORAGE_TYPE: "local"
+  STORAGE_LOCAL_PATH: "storage"
+  # Mail
+  MAIL_TYPE: ""
+  MAIL_DEFAULT_SEND_FROM: "no-reply <no-reply@example.com.cn>"
+  SMTP_SERVER: "smtp.qiye.aliyun.com"
+  SMTP_PORT: "465"
+  SMTP_USE_TLS: "true"
+  # SMS
+  SMS_URL: "http://10.119.27.241:26511/send"
+  # GitHub
+  GITHUB_CLIENT_ID: ""
+  GITHUB_CLIENT_SECRET: ""
+  # AMP
+  CLOUD_SUPPLIER: "lazyllm"
+  AMS_ENDPOINT: "http://cloud-service:31340"
+  FT_ENDPOINT: "http://cloud-service:31341"
+  CONDUCTOR_ENDPOINT: "http://api:8087/console/api/data/version/export/ft"
+  # SCO
+  SCC_ZONE: "cn-sh-01a"
+  SCC_ENV: "cn"
+  SCC_CONTAINER_MOUNTS: "b41e67b5-6e82-11ef-bd34-b6137b970450:/home/mnt,ce847c75-6e82-11ef-bd34-b6137b970450:/mnt/lustre/share_data"
+  LAZYLLM_SLURM_PART: "a800"
+  LAZYLLM_SCO_RESOURCE_TYPE: "N3lS.Ii.I60"
+  LAZYLLM_SCO_WORKSPACE: "expert-services"
+  # LazyLLM
+  LAZYLLM_UPLOAD_PATH: "/mnt/lustre/share_data/lcagent/upload"
+  LAZYLLM_MODEL_PATH: "/mnt/lustre/share_data/models"
+  HUGGINGFACE_HUB_CACHE: "/mnt/lustre/share_data/lcagent/exist_model/config"
+  EXIST_MODEL_PATH: "/mnt/lustre/share_data/lcagent/exist_model/models_hub"
+  APP_MODEL_PATH: "/app/upload"
+  DEFAULT_ICON_PATH: "/app/upload/default_icon"
+  # MinIO
+  MINIO_ENDPOINT: "minio"
+  MINIO_PORT: "9000"
+  MINIO_USE_SSL: "false"
+  MINIO_ACCESS_KEY: "minioadmin"
+  MINIO_SECRET_KEY: "minioadmin"
+  MINIO_BUCKET_NAME: "mcp-echarts"
+  MINIO_PROXY: "http://127.0.0.1:30382"
+  # MCP
+  DEPLOY_MCP_ENV: "docker"
+  MCP_EMAIL_TYPE: "auto"
+  # Cloud Service
+  LAZYLLM_DEFAULT_LAUNCHER: "empty"
+  LAZYLLM_CUDA_VISIBLE: "True"
+  VLLM_ENFORCE_EAGER: "true"
+  LAZYLLM_TEMP_DIR: "/mnt/lustre/share_data/temp"
+  LAZYLLM_INFER_LOG_ROOT: "/mnt/lustre/share_data/logs/infer"
+  LAZYLLM_TRAIN_TARGET_ROOT: "/mnt/lustre/share_data/finetune_models"
+  LAZYLLM_MODEL_CACHE_DIR: "/mnt/lustre/share_data/models"
+  LAZYLLM_MODEL_PATH: "/mnt/lustre/share_data/models:/mnt/lustre/share_data/lcagent/exist_model/models_hub"
+

@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: lcagent-storage
+  namespace: lcagentns-app
+spec:
+  accessModes:
+    - ReadWriteOnce  # 注意：local-path 只支持 RWO，不支持 RWX。如果确实需要多 Pod 共享，请使用 NFS
+  resources:
+    requests:
+      storage: 100Gi  # 根据实际需求调整
+  storageClassName: "local-path"  # 使用本地路径存储类，如果未安装请先安装 local-path-provisioner
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: lcagent-upload
+  namespace: lcagentns-app
+spec:
+  accessModes:
+    - ReadWriteOnce  # 注意：local-path 只支持 RWO，不支持 RWX
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: "local-path"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: lcagent-share-data
+  namespace: lcagentns-app
+spec:
+  accessModes:
+    - ReadWriteOnce  # 注意：local-path 只支持 RWO，不支持 RWX
+  resources:
+    requests:
+      storage: 500Gi  # 模型存储需要较大空间
+  storageClassName: "local-path"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tidb-data
+  namespace: lcagentns-app
+spec:
+  accessModes:
+    - ReadWriteOnce  # TiDB 数据通常只需要单个 Pod 访问
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: "local-path"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tikv-data
+  namespace: lcagentns-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: "local-path"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pd-data
+  namespace: lcagentns-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: "local-path"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-data
+  namespace: lcagentns-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: "local-path"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-data
+  namespace: lcagentns-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: "local-path"
+
