@@ -64,3 +64,5 @@ mcp
 modelscope
 dashscope
 zhipuai
+paddleocr
+moviepy

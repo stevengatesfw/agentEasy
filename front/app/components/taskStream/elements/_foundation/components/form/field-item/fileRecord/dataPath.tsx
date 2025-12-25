@@ -473,10 +473,23 @@ const FieldItem: FC<Partial<FieldItemProps>> = ({
                 }
               }
               else if (progressData.event === 'finish') {
-                updateNodeState(targetId, {
-                  uploadProgress: 100,
-                  uploadStatus: progressData.data?.status === 'succeeded' ? '数据解析完成' : '解析完成',
-                })
+                // 检查是否是失败状态
+                if (progressData.data?.status === 'failed') {
+                  const errorInfo = progressData.data?.error || {}
+                  const errorMsg = errorInfo.simple_error || errorInfo.detail_error || '数据解析失败'
+                  const displayMsg = errorMsg.length > 100 ? errorMsg.substring(0, 100) + '...' : errorMsg
+                  updateNodeState(targetId, {
+                    uploadProgress: 0,
+                    uploadStatus: displayMsg,
+                    isLoading: false,
+                  })
+                  message.error(displayMsg)
+                } else {
+                  updateNodeState(targetId, {
+                    uploadProgress: 100,
+                    uploadStatus: progressData.data?.status === 'succeeded' ? '数据解析完成' : '解析完成',
+                  })
+                }
               }
               else if (progressData.event === 'stop') {
                 // 处理停止事件，通常表示流程结束
@@ -484,6 +497,18 @@ const FieldItem: FC<Partial<FieldItemProps>> = ({
                   uploadProgress: 100,
                   uploadStatus: '数据解析完成',
                 })
+              }
+              else if (progressData.event === 'fail' || progressData.event === 'error') {
+                // 处理失败事件
+                const errorInfo = progressData.data?.error || progressData.data || {}
+                const errorMsg = errorInfo.simple_error || errorInfo.detail_error || errorInfo.message || '数据解析失败'
+                const displayMsg = errorMsg.length > 100 ? errorMsg.substring(0, 100) + '...' : errorMsg
+                updateNodeState(targetId, {
+                  uploadProgress: 0,
+                  uploadStatus: displayMsg,
+                  isLoading: false,
+                })
+                message.error(displayMsg)
               }
             }
             catch (e) {
@@ -499,8 +524,9 @@ const FieldItem: FC<Partial<FieldItemProps>> = ({
             }
           },
           onError: (error) => {
+            const errorMsg = error?.message || error?.toString() || '数据解析失败'
             updateNodeState(targetId, {
-              uploadStatus: '数据解析失败',
+              uploadStatus: errorMsg,
               uploadProgress: 0,
               isLoading: false,
             })
@@ -514,12 +540,17 @@ const FieldItem: FC<Partial<FieldItemProps>> = ({
                 isLoading: false,
               },
             })
-            message.error('数据解析失败')
+            message.error(errorMsg.length > 50 ? errorMsg.substring(0, 50) + '...' : errorMsg)
           },
           onFinish: ({ data }) => {
             if (data.status === 'failed') {
+              // 提取详细错误信息
+              const errorInfo = data.error || {}
+              const errorMsg = errorInfo.simple_error || errorInfo.detail_error || '数据解析失败'
+              const displayMsg = errorMsg.length > 100 ? errorMsg.substring(0, 100) + '...' : errorMsg
+              
               updateNodeState(targetId, {
-                uploadStatus: '数据解析失败',
+                uploadStatus: displayMsg,
                 uploadProgress: 0,
                 isLoading: false,
               })
@@ -528,12 +559,12 @@ const FieldItem: FC<Partial<FieldItemProps>> = ({
                   isLoading: false,
                 },
               })
-              message.error('数据解析失败')
+              message.error(displayMsg)
               setTimeout(() => {
                 updateNodeState(targetId, {
                   showProgress: false,
                 })
-              }, 1500)
+              }, 3000) // 延长显示时间，让用户能看到错误信息
               return
             }
             updateNodeState(targetId, {
