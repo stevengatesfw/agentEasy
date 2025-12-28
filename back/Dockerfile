@@ -37,6 +37,9 @@ RUN set -ex \
         libibverbs1 \
         libgl1 \
         bash \
+        fonts-wqy-zenhei \
+        fonts-wqy-microhei \
+        fonts-noto-cjk \
     && ln -sf /usr/share/zoneinfo/$TZ /etc/localtime \
     && echo 'LANG="en_US.UTF-8"' > /etc/default/locale \
     && echo 'LC_ALL="en_US.UTF-8"' >> /etc/default/locale \
@@ -55,6 +58,9 @@ RUN cd /tmp/LazyLLM && pip install -r requirements.txt --no-cache-dir && \
 
 # 创建必要的目录
 RUN mkdir -p /app/src /app/upload /app/logs /app/build_so
+
+# 创建 Python 软链接，确保 /usr/bin/python 指向正确的 Python 解释器
+RUN ln -sf /usr/local/bin/python /usr/bin/python || true
 
 
 ENV APP=/app

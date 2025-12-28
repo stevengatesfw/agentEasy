@@ -77,7 +77,16 @@ const AgentPage = (req) => {
   }
 
   const chatSelect = (event) => {
-    const chatId = event.target.getAttribute('data-id')
+    // 优先使用 currentTarget（绑定事件的元素），如果没有 data-id 则向上查找
+    let target = event.currentTarget
+    let chatId = target?.getAttribute('data-id')
+    
+    // 如果 currentTarget 没有 data-id，向上查找最近的带有 data-id 的元素
+    if (!chatId && event.target) {
+      target = event.target.closest('[data-id]')
+      chatId = target?.getAttribute('data-id')
+    }
+   
     if (!chatId)
       return
 

@@ -8,13 +8,33 @@ import BytesPreview from '../bytes-preview'
 import { JsonEditor } from '../../code'
 // import { ValueType, formatValueByType } from '../../utils'
 
+// 验证是否是有效的视频路径
+const isValidVideoPath = (path: string): boolean => {
+  if (!path || typeof path !== 'string')
+    return false
+  
+  // 检查是否是视频文件扩展名
+  if (/\.(mp4|avi|mov|wmv|flv|webm|mkv)$/i.test(path))
+    return true
+  
+  // 检查是否是/tmp/路径（可能是临时视频文件）
+  if (path.startsWith('/tmp/') && /\.(mp4|avi|mov|wmv|flv|webm|mkv)$/i.test(path))
+    return true
+  
+  // 检查是否是包含视频扩展名的文件路径
+  if ((path.includes('/') || path.includes('\\')) && /\.(mp4|avi|mov|wmv|flv|webm|mkv)$/i.test(path))
+    return true
+  
+  return false
+}
+
 const judgeType = (value: any) => {
   if (!value)
     return undefined
 
   if (Array.isArray(value)) {
-    // 检查数组中是否包含视频文件
-    if (value.length > 0 && typeof value[0] === 'string' && /\.(mp4|avi|mov|wmv|flv|webm|mkv)$/i.test(value[0]))
+    // 检查数组中是否包含视频文件（需要验证路径有效性）
+    if (value.length > 0 && typeof value[0] === 'string' && isValidVideoPath(value[0]))
       return 'video'
     // 检查数组中是否包含音频文件
     if (value.length > 0 && typeof value[0] === 'string' && /\.(wav|mp3|m4a|ogg|flac)$/i.test(value[0]))
@@ -29,7 +49,8 @@ const judgeType = (value: any) => {
     return 'object'
 
   if (typeof value === 'string') {
-    if (/\.(mp4|avi|mov|wmv|flv|webm|mkv)$/i.test(value))
+    // 对于字符串，需要验证是否是有效的视频路径
+    if (isValidVideoPath(value))
       return 'video'
     else if (/\.(wav|mp3|m4a|ogg|flac)$/i.test(value))
       return 'audio'

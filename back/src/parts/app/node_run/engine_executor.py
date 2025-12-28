@@ -237,8 +237,25 @@ class EngineExecutor:
 
             check_res = LazyConverter.is_graph_can_run(graph_data)
             if not check_res:
+                # 找出构建失败的节点
+                nodes = graph_data.get("nodes", []) + graph_data.get("resources", [])
+                failed_nodes = []
+                for node in nodes:
+                    node_kind = node.get("kind", "")
+                    if (
+                        node_kind not in ("start", "end", "answer", "aggregator", "__start__", "__end__")
+                        and not node
+                    ):
+                        node_name = node.get("name", node.get("id", "未知节点"))
+                        failed_nodes.append(node_name)
+                
+                error_detail = f"存在节点构建失败"
+                if failed_nodes:
+                    error_detail += f"：{', '.join(failed_nodes[:5])}"  # 最多显示5个节点
+                    if len(failed_nodes) > 5:
+                        error_detail += f" 等共{len(failed_nodes)}个节点"
                 raise ValueError(
-                    "Graph data processing failed: There are nodes that have failed to build"
+                    f"Graph data processing failed: {error_detail}"
                 )
 
             self._validate_graph_data(graph_data)
@@ -249,8 +266,13 @@ class EngineExecutor:
 
             return graph_data
         except Exception as e:
-            self._logger.error(f"Graph data processing failed: {e}")
-            raise ValueError(f"Graph data processing failed: {e}")
+            error_msg = str(e)
+            self._logger.error(f"Graph data processing failed: {e}", exc_info=True)
+            # 如果已经是详细的错误信息，直接抛出
+            if "Graph data processing failed" in error_msg:
+                raise ValueError(error_msg)
+            else:
+                raise ValueError(f"Graph data processing failed: {error_msg}")
 
     def add_server_resource_if_needed(
         self, resources: list[dict[str, Any]]
@@ -310,8 +332,17 @@ class EngineExecutor:
             self._logger.info(f"LightEngine started successfully: {self._engine_id}")
             return self._engine_id
         except Exception as e:
-            self._logger.error(f"LightEngine startup failed: {e}",stack_info=True)
-            raise ValueError(f"运行失败，请检查画布配置是否正确")
+            error_msg = str(e)
+            self._logger.error(f"LightEngine startup failed: {e}", exc_info=True)
+            # 提供更详细的错误信息
+            if "Graph data processing failed" in error_msg:
+                raise ValueError(f"运行失败，请检查画布配置是否正确：{error_msg}")
+            elif "There are nodes that have failed to build" in error_msg:
+                raise ValueError(f"运行失败，请检查画布配置是否正确：存在节点构建失败，请检查节点配置和连接")
+            else:
+                # 保留原始错误信息的前200个字符，避免错误信息过长
+                error_detail = error_msg[:200] if len(error_msg) > 200 else error_msg
+                raise ValueError(f"运行失败，请检查画布配置是否正确：{error_detail}")
 
     def stop_engine(self) -> None:
         """Stop LightEngine"""
