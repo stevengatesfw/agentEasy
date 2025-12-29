@@ -327,6 +327,32 @@ class LazyConverter:
 
         change_map = {self.start_id: "__start__", self.end_id: "__end__"}
         succ_edges = [(v, u) for u in ggg.pred for v in ggg.pred[u]]
+        
+        # Sort edges by config__input_shape order for each target node
+        # Build targetHandle to index mapping for each target node
+        target_handle_order = {}
+        for target_id, target_node in self.id_map_basenode.items():
+            input_ports = target_node.get_data().get("config__input_ports", [])
+            if input_ports:
+                target_handle_order[target_id] = {port["id"]: idx for idx, port in enumerate(input_ports)}
+        
+        # Build edge to targetHandle mapping from raw_edges
+        edge_to_handle = {(e.get("source"), e.get("target")): e.get("targetHandle") 
+                          for e in self.raw_edges if e.get("targetHandle")}
+        
+        # Sort edges: group by target, then sort by targetHandle order
+        def get_sort_key(edge):
+            source_id = change_map.get(edge[0], edge[0])
+            target_id = change_map.get(edge[1], edge[1])
+            target_handle = edge_to_handle.get((source_id, target_id))
+            if target_handle and target_id in target_handle_order:
+                order = target_handle_order[target_id].get(target_handle)
+                if order is not None:
+                    return (target_id, order)
+            return (target_id, 999999)  # Unmapped edges at the end
+        
+        succ_edges.sort(key=get_sort_key)
+        
         for edge in succ_edges:
             ret_edges.append(
                 {
