@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloud-service
+  namespace: lcagentns-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloud-service
+  template:
+    metadata:
+      labels:
+        app: cloud-service
+    spec:
+      securityContext:
+        runAsUser: 0
+      containers:
+      - name: cloud-service
+        image: lcagent-core:12.8multienv
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: lcagent-config
+        - secretRef:
+            name: lcagent-secrets
+        env:
+        - name: LAZYLLM_DEFAULT_LAUNCHER
+          value: "empty"
+        - name: LAZYLLM_CUDA_VISIBLE
+          value: "True"
+        - name: VLLM_ENFORCE_EAGER
+          value: "true"
+        - name: LAZYLLM_TEMP_DIR
+          value: "/mnt/lustre/share_data/temp"
+        - name: LAZYLLM_INFER_LOG_ROOT
+          value: "/mnt/lustre/share_data/logs/infer"
+        - name: LAZYLLM_TRAIN_TARGET_ROOT
+          value: "/mnt/lustre/share_data/finetune_models"
+        - name: LAZYLLM_MODEL_CACHE_DIR
+          value: "/mnt/lustre/share_data/models"
+        - name: LAZYLLM_MODEL_PATH
+          value: "/mnt/lustre/share_data/models:/mnt/lustre/share_data/lazycraft/exist_model/models_hub"
+        command:
+        - /bin/bash
+        - -lc
+        - |
+          /opt/conda/envs/lcagent-core/bin/python -c 'import lazyllm; from lazyllm.tools.infer_service.serve import InferServer; from lazyllm.tools.train_service.serve import TrainServer; inference_service = lazyllm.ServerModule(InferServer(), port="31340", launcher=lazyllm.launcher.EmptyLauncher(sync=False, ngpus=0)); inference_service.start()(); train_service = lazyllm.ServerModule(TrainServer(), port="31341", launcher=lazyllm.launcher.EmptyLauncher(sync=False, ngpus=0)); train_service.start()(); inference_service.wait(); train_service.wait()' &&
+          tail -f /dev/null
+        volumeMounts:
+        - name: share-data
+          mountPath: /mnt/lustre/share_data
+        ports:
+        - containerPort: 31340
+          name: ams
+        - containerPort: 31341
+          name: ft
+        resources:
+          # 注意：即使不请求 GPU 资源，如果容器运行时支持 GPU，remote launcher 仍可能访问 GPU
+          # 但 Kubernetes 调度器可能不会将 Pod 调度到有 GPU 的节点
+          # 如果推理服务无法使用 GPU，需要添加 GPU 资源请求
+          requests:
+            #nvidia.com/gpu: 1
+            memory: "2Gi"
+            cpu: "500m"
+          limits:
+            
+            memory: "4Gi"
+            cpu: "2000m"
+      volumes:
+      - name: share-data
+        persistentVolumeClaim:
+          claimName: lcagent-share-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloud-service
+  namespace: lcagentns-app
+spec:
+  selector:
+    app: cloud-service
+  ports:
+  - port: 31340
+    targetPort: 31340
+    name: ams
+  - port: 31341
+    targetPort: 31341
+    name: ft
+  type: NodePort  # 如果需要从集群外部访问
+  # nodePorts:
+  #   - name: ams
+  #     nodePort: 31340
+  #   - name: ft
+  #     nodePort: 31341
+

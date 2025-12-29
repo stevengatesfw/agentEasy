@@ -1,0 +1,176 @@
+# TiDB PD (Placement Driver)
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: pd
+  namespace: lcagentns-app
+spec:
+  serviceName: pd
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pd
+  template:
+    metadata:
+      labels:
+        app: pd
+    spec:
+      securityContext:
+        runAsUser: 0
+      containers:
+      - name: pd
+        image: registry.cn-hangzhou.aliyuncs.com/lazyllm/pd:v8.5.0
+        env:
+        - name: PD_SERVER_NAME
+          value: "pd"
+        - name: INITIAL_CLUSTER
+          value: "pd=http://pd:2380"
+        - name: ETCD_INITIAL_CLUSTER_STATE
+          value: "new"
+        - name: TZ
+          value: "Asia/Shanghai"
+        volumeMounts:
+        - name: pd-data
+          mountPath: /pd
+        ports:
+        - containerPort: 2379
+          name: client
+        - containerPort: 2380
+          name: peer
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 2379
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: pd-data
+        persistentVolumeClaim:
+          claimName: pd-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pd
+  namespace: lcagentns-app
+spec:
+  selector:
+    app: pd
+  ports:
+  - port: 2379
+    targetPort: 2379
+    name: client
+  - port: 2380
+    targetPort: 2380
+    name: peer
+---
+# TiKV
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: tikv
+  namespace: lcagentns-app
+spec:
+  serviceName: tikv
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tikv
+  template:
+    metadata:
+      labels:
+        app: tikv
+    spec:
+      securityContext:
+        runAsUser: 0
+      containers:
+      - name: tikv
+        image: registry.cn-hangzhou.aliyuncs.com/lazyllm/tikv:v8.5.0
+        env:
+        - name: PD_ADDR
+          value: "pd:2379"
+        - name: TZ
+          value: "Asia/Shanghai"
+        volumeMounts:
+        - name: tikv-data
+          mountPath: /tikv
+        ports:
+        - containerPort: 20160
+          name: tikv
+      volumes:
+      - name: tikv-data
+        persistentVolumeClaim:
+          claimName: tikv-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tikv
+  namespace: lcagentns-app
+spec:
+  selector:
+    app: tikv
+  ports:
+  - port: 20160
+    targetPort: 20160
+---
+# TiDB
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tidb
+  namespace: lcagentns-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tidb
+  template:
+    metadata:
+      labels:
+        app: tidb
+    spec:
+      securityContext:
+        runAsUser: 0
+      containers:
+      - name: tidb
+        image: registry.cn-hangzhou.aliyuncs.com/lazyllm/tidb:v8.5.0
+        env:
+        - name: PATH
+          value: "bin:$PATH"
+        - name: MYSQL_HOST
+          value: "0.0.0.0"
+        - name: MYSQL_PORT
+          value: "4000"
+        - name: STORE
+          value: "tikv"
+        - name: PD_ADDR
+          value: "pd:2379"
+        - name: TZ
+          value: "Asia/Shanghai"
+        ports:
+        - containerPort: 4000
+          name: mysql
+        volumeMounts:
+        - name: tidb-data
+          mountPath: /tmp/tidb
+      volumes:
+      - name: tidb-data
+        persistentVolumeClaim:
+          claimName: tidb-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tidb
+  namespace: lcagentns-app
+spec:
+  selector:
+    app: tidb
+  ports:
+  - port: 4000
+    targetPort: 4000
+    name: mysql
+  type: NodePort  # 如果需要从集群外部访问，使用 NodePort
+  # nodePort: 30400  # 可选：指定 NodePort，否则 Kubernetes 会自动分配
+

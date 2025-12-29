@@ -1,0 +1,186 @@
+# API Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: lcagentns-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      securityContext:
+        runAsUser: 0
+      containers:
+      - name: api
+        image: easyagent-back:latest  # 或使用实际镜像地址
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: lcagent-config
+        - secretRef:
+            name: lcagent-secrets
+        env:
+        - name: MODE
+          value: "api"
+        - name: DEBUG
+          value: "true"
+        - name: LAZYLLM_CUDA_VISIBLE
+          value: "True"
+        - name: LAZYLLM_MODEL_CACHE_DIR
+          value: "/mnt/lustre/share_data/models"
+        volumeMounts:
+        - name: storage
+          mountPath: /app/storage
+        - name: upload
+          mountPath: /app/upload
+        - name: share-data
+          mountPath: /mnt/lustre/share_data
+        ports:
+        - containerPort: 8087
+          name: http
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: lcagent-storage
+      - name: upload
+        persistentVolumeClaim:
+          claimName: lcagent-upload
+      - name: share-data
+        persistentVolumeClaim:
+          claimName: lcagent-share-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: lcagentns-app
+spec:
+  selector:
+    app: api
+  ports:
+  - port: 8087
+    targetPort: 8087
+    name: http
+---
+# Worker Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: lcagentns-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      securityContext:
+        runAsUser: 0
+      containers:
+      - name: worker
+        image: easyagent-back:latest
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: lcagent-config
+        - secretRef:
+            name: lcagent-secrets
+        env:
+        - name: MODE
+          value: "worker"
+        - name: LAZYLLM_CUDA_VISIBLE
+          value: "True"
+        - name: LAZYLLM_MODEL_CACHE_DIR
+          value: "/mnt/lustre/share_data/models"
+        volumeMounts:
+        - name: storage
+          mountPath: /app/storage
+        - name: upload
+          mountPath: /app/upload
+        - name: share-data
+          mountPath: /mnt/lustre/share_data
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: lcagent-storage
+      - name: upload
+        persistentVolumeClaim:
+          claimName: lcagent-upload
+      - name: share-data
+        persistentVolumeClaim:
+          claimName: lcagent-share-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker
+  namespace: lcagentns-app
+spec:
+  selector:
+    app: worker
+  ports:
+  - port: 8088
+    targetPort: 8088
+    name: http
+  # Worker 通常不需要对外暴露端口，但 Kubernetes 要求必须有 ports 定义
+---
+# Beat Service (Celery Beat)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beat
+  namespace: lcagentns-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: beat
+  template:
+    metadata:
+      labels:
+        app: beat
+    spec:
+      securityContext:
+        runAsUser: 0
+      containers:
+      - name: beat
+        image: easyagent-back:latest
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: lcagent-config
+        - secretRef:
+            name: lcagent-secrets
+        env:
+        - name: MODE
+          value: "beat"
+        - name: LAZYLLM_CUDA_VISIBLE
+          value: "True"
+        volumeMounts:
+        - name: storage
+          mountPath: /app/storage
+        - name: upload
+          mountPath: /app/upload
+        - name: share-data
+          mountPath: /mnt/lustre/share_data
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: lcagent-storage
+      - name: upload
+        persistentVolumeClaim:
+          claimName: lcagent-upload
+      - name: share-data
+        persistentVolumeClaim:
+          claimName: lcagent-share-data
+

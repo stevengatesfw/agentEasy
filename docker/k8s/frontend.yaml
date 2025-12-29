@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: lcagentns-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: web
+        image: easyagent-front:latest  # 或使用实际镜像地址
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: CONSOLE_API_URL
+          value: ""
+        - name: APP_API_URL
+          value: ""
+        - name: SENTRY_DSN
+          value: ""
+        ports:
+        - containerPort: 8088
+          name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: lcagentns-app
+spec:
+  selector:
+    app: web
+  ports:
+  - port: 8088
+    targetPort: 8088
+    name: http
+

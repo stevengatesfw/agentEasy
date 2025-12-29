@@ -1,0 +1,95 @@
+# MCP ECharts SSE Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-echarts-sse
+  namespace: lcagentns-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mcp-echarts-sse
+  template:
+    metadata:
+      labels:
+        app: mcp-echarts-sse
+    spec:
+      containers:
+      - name: mcp-echarts-sse
+        image: registry.cn-hangzhou.aliyuncs.com/lazyllm/mcp-echarts-mcp-echarts-sse:latest
+        command:
+        - sh
+        - -c
+        - apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont && node build/index.js --transport sse --port 3033
+        envFrom:
+        - configMapRef:
+            name: lcagent-config
+        env:
+        - name: PUPPETEER_EXECUTABLE_PATH
+          value: "/usr/bin/chromium-browser"
+        - name: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
+          value: "true"
+        ports:
+        - containerPort: 3033
+          name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-echarts-sse
+  namespace: lcagentns-app
+spec:
+  selector:
+    app: mcp-echarts-sse
+  ports:
+  - port: 3033
+    targetPort: 3033
+    name: http
+---
+# Web Search SSE Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-search-sse
+  namespace: lcagentns-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-search-sse
+  template:
+    metadata:
+      labels:
+        app: web-search-sse
+    spec:
+      containers:
+      - name: web-search-sse
+        image: registry.cn-hangzhou.aliyuncs.com/lazyllm/open-web-search:v1.1.5.1
+        workingDir: /app
+        command:
+        - node
+        - build/index.js
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: ENABLE_CORS
+          value: "true"
+        - name: CORS_ORIGIN
+          value: "*"
+        ports:
+        - containerPort: 3000  # 根据实际镜像调整
+          name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-search-sse
+  namespace: lcagentns-app
+spec:
+  selector:
+    app: web-search-sse
+  ports:
+  - port: 3000
+    targetPort: 3000
+    name: http
+

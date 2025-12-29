@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: lcagentns-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+      - name: minio
+        image: registry.cn-hangzhou.aliyuncs.com/lazyllm/minio:RELEASE.2025-07-23T15-54-02Z
+        command:
+        - minio
+        - server
+        - /data
+        - --console-address
+        - ":9001"
+        env:
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: lcagent-secrets
+              key: MINIO_ACCESS_KEY
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: lcagent-secrets
+              key: MINIO_SECRET_KEY
+        ports:
+        - containerPort: 9000
+          name: api
+        - containerPort: 9001
+          name: console
+        volumeMounts:
+        - name: minio-data
+          mountPath: /data
+        livenessProbe:
+          exec:
+            command:
+            - mc
+            - ready
+            - local
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: minio-data
+        persistentVolumeClaim:
+          claimName: minio-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: lcagentns-app
+spec:
+  selector:
+    app: minio
+  ports:
+  - port: 9000
+    targetPort: 9000
+    name: api
+  - port: 9001
+    targetPort: 9001
+    name: console
+---
+# MinIO 初始化 Job
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-minio
+  namespace: lcagentns-app
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: mc
+        image: registry.cn-hangzhou.aliyuncs.com/lazyllm/mc:RELEASE.2025-07-21T05-28-08Z
+        command:
+        - /bin/sh
+        - -c
+        - |
+          mc alias set myminio http://minio:9000 $MINIO_ACCESS_KEY $MINIO_SECRET_KEY --api s3v4 &&
+          mc mb myminio/mcp-echarts || true &&
+          mc anonymous set download myminio/mcp-echarts &&
+          echo '✅ MinIO bucket mcp-echarts is ready and public'
+        env:
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: lcagent-secrets
+              key: MINIO_ACCESS_KEY
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: lcagent-secrets
+              key: MINIO_SECRET_KEY
+
