@@ -305,6 +305,15 @@ class EngineExecutor:
         try:
             # Stop existing instance first
             self.stop_engine()
+            
+            # Clear node cache to ensure fresh API key retrieval
+            # This ensures that nodes are rebuilt with the latest API key from database
+            if hasattr(self._engine, '_nodes'):
+                # Clear all nodes except __start__ and __end__
+                nodes_to_clear = [node_id for node_id in self._engine._nodes.keys() 
+                                 if node_id not in ('__start__', '__end__')]
+                if nodes_to_clear:
+                    self._engine.release_node(nodes_to_clear)
 
             # Configure database connection
             self._setup_database_connection()
