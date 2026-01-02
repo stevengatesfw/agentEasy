@@ -39,8 +39,10 @@ const judgeType = (value: any) => {
     // 检查数组中是否包含音频文件
     if (value.length > 0 && typeof value[0] === 'string' && /\.(wav|mp3|m4a|ogg|flac)$/i.test(value[0]))
       return 'audio'
-    // 检查数组中是否包含图片文件
-    if (value.length > 0 && typeof value[0] === 'string' && /\.(jpe?g|png|gif|bmp|webp|svg)$/i.test(value[0]))
+    // 检查数组中是否包含图片文件（包括 base64 格式）
+    if (value.length > 0 && typeof value[0] === 'string' && (
+      /\.(jpe?g|png|gif|bmp|webp|svg)$/i.test(value[0]) || value[0].startsWith('data:image/')
+    ))
       return 'image'
     return 'array'
   }
@@ -49,6 +51,9 @@ const judgeType = (value: any) => {
     return 'object'
 
   if (typeof value === 'string') {
+    // 检查是否是 base64 格式的图片
+    if (value.startsWith('data:image/'))
+      return 'image'
     // 对于字符串，需要验证是否是有效的视频路径
     if (isValidVideoPath(value))
       return 'video'
