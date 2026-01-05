@@ -1,0 +1,45 @@
+# K8sLauncher 配置文件 ConfigMap 示例
+# 
+# 使用方法：
+# 1. 根据实际环境修改配置
+# 2. 复制为 k8s-launcher-configmap.yaml
+# 3. 应用配置: kubectl apply -f k8s-launcher-configmap.yaml
+# 4. 在 cloud-service.yaml 中挂载此 ConfigMap
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k8s-launcher-config
+  namespace: lcagentns-app
+data:
+  # 配置文件内容（YAML 格式）
+  k8s-launcher-config.yaml: |
+    # K8sLauncher 配置文件
+    container_image: "lcagent-core:7.0-1"
+    namespace: "lcagentns-app"
+    svc_type: "LoadBalancer"
+    
+    # 存储卷配置
+    volume:
+      - name: share-data
+        mount_path: "/mnt/lustre/share_data"
+        persistent_volume_claim:
+          claim_name: "share-data-pvc"
+    
+    # 资源限制配置
+    resource:
+      requests:
+        nvidia.com/gpu: "1"
+        memory: "16Gi"
+        cpu: "2"
+      limits:
+        nvidia.com/gpu: "1"
+        memory: "32Gi"
+        cpu: "4"
+    
+    # Gateway 配置（可选）
+    on_gateway: false
+    gateway_name: "lazyllm-gateway"
+    gateway_class_name: "istio"
+
+

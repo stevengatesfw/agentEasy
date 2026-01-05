@@ -171,6 +171,6 @@ spec:
   - port: 4000
     targetPort: 4000
     name: mysql
+    nodePort: 30400  # 指定 NodePort，方便从宿主机连接（30000-32767 范围内）
   type: NodePort  # 如果需要从集群外部访问，使用 NodePort
-  # nodePort: 30400  # 可选：指定 NodePort，否则 Kubernetes 会自动分配
 

@@ -475,3 +475,4 @@ kubectl logs <pod-name> --since=1h -n lcagentns-app
 
 **建议：安装 k9s 作为主要工具，Lens 作为图形界面补充。**
 
+

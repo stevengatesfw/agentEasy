@@ -70,3 +70,4 @@ spec:
 - 使用 `hostpath` StorageClass 可以立即绑定，避免循环依赖
 - 其他应用 PVC 仍然使用 `local-path` StorageClass，这是正确的
 
+

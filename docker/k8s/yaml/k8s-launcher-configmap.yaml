@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k8s-launcher-config
+  namespace: lcagentns-app
+data:
+  k8s-launcher-config.yaml: |
+    # K8sLauncher 配置文件
+    # 用于配置 K8sLauncher 创建推理服务时的容器镜像和其他参数
+    
+    # 容器镜像地址（推理服务使用的基础镜像）
+    container_image: "lcagent-core:7.0-1"
+    
+    # Kubernetes 命名空间
+    namespace: "lcagentns-app"
+    
+    # Service 类型
+    svc_type: "LoadBalancer"  # 可选值: LoadBalancer, NodePort, ClusterIP
+    
+    # 存储卷配置
+    volume:
+      - name: share-data
+        mount_path: "/mnt/lustre/share_data"
+        persistent_volume_claim:
+          claim_name: "lcagent-share-data"
+    
+    # 资源限制配置
+    resource:
+      requests:
+        nvidia.com/gpu: "1"
+        memory: "16Gi"
+        cpu: "2"
+      limits:
+        nvidia.com/gpu: "1"
+        memory: "32Gi"
+        cpu: "4"
+    
+    # Gateway 配置（可选）
+    on_gateway: false
+    gateway_name: "lazyllm-gateway"
+    gateway_class_name: "istio"
+    host: null
+    path: "/generate"
+

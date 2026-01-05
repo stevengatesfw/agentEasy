@@ -17,7 +17,7 @@ spec:
         runAsUser: 0
       containers:
       - name: cloud-service
-        image: lcagent-core:12.8multienv
+        image: lcagent-core:7.0-1
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
@@ -41,15 +41,22 @@ spec:
           value: "/mnt/lustre/share_data/models"
         - name: LAZYLLM_MODEL_PATH
           value: "/mnt/lustre/share_data/models:/mnt/lustre/share_data/lazycraft/exist_model/models_hub"
+        # K8sLauncher 配置文件路径
+        - name: K8S_CONFIG_PATH
+          value: "/app/config/k8s-launcher-config.yaml"
         command:
         - /bin/bash
         - -lc
         - |
-          /opt/conda/envs/lcagent-core/bin/python -c 'import lazyllm; from lazyllm.tools.infer_service.serve import InferServer; from lazyllm.tools.train_service.serve import TrainServer; inference_service = lazyllm.ServerModule(InferServer(), port="31340", launcher=lazyllm.launcher.EmptyLauncher(sync=False, ngpus=0)); inference_service.start()(); train_service = lazyllm.ServerModule(TrainServer(), port="31341", launcher=lazyllm.launcher.EmptyLauncher(sync=False, ngpus=0)); train_service.start()(); inference_service.wait(); train_service.wait()' &&
+          python -c 'import lazyllm; from lazyllm.tools.infer_service.serve import InferServer; from lazyllm.tools.train_service.serve import TrainServer; inference_service = lazyllm.ServerModule(InferServer(), port="31340", launcher=lazyllm.launcher.EmptyLauncher(sync=False, ngpus=0)); inference_service.start()(); train_service = lazyllm.ServerModule(TrainServer(), port="31341", launcher=lazyllm.launcher.EmptyLauncher(sync=False, ngpus=0)); train_service.start()(); inference_service.wait(); train_service.wait()' &&
           tail -f /dev/null
         volumeMounts:
         - name: share-data
           mountPath: /mnt/lustre/share_data
+        # 挂载 K8sLauncher 配置文件
+        - name: k8s-launcher-config
+          mountPath: /app/config
+          readOnly: true
         ports:
         - containerPort: 31340
           name: ams
@@ -71,6 +78,10 @@ spec:
       - name: share-data
         persistentVolumeClaim:
           claimName: lcagent-share-data
+      # K8sLauncher 配置文件卷
+      - name: k8s-launcher-config
+        configMap:
+          name: k8s-launcher-config
 ---
 apiVersion: v1
 kind: Service

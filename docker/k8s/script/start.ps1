@@ -1,8 +1,13 @@
-# Kubernetes 服务启动脚本 (PowerShell)
+﻿# Kubernetes 服务启动脚本 (PowerShell)
 # 使用方法: .\start.ps1
 # 
 # 如果遇到执行策略错误，运行：
 # Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# 设置控制台编码为 UTF-8，避免中文和 emoji 显示问题
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+chcp 65001 | Out-Null
 
 $ErrorActionPreference = "Continue"  # 改为 Continue 以便看到所有输出
 
@@ -32,12 +37,13 @@ try {
 Write-Host "✅ kubectl 和 Kubernetes 集群检查通过" -ForegroundColor Green
 Write-Host ""
 
-# 获取脚本所在目录
+# 获取脚本所在目录，并切换到 k8s 根目录
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-Set-Location $ScriptDir
+$K8sRootDir = Split-Path -Parent $ScriptDir
+Set-Location $K8sRootDir
 
-Write-Host "📦 步骤 1/13: 安装 Local Path Provisioner (存储类)" -ForegroundColor Yellow
-kubectl apply -f storage-class-local-path.yaml
+Write-Host "📦 步骤 1/14: 安装 Local Path Provisioner (存储类)" -ForegroundColor Yellow
+kubectl apply -f yaml/storage-class-local-path.yaml
 Write-Host "   等待存储类就绪..."
 Start-Sleep -Seconds 2
 kubectl get storageclass local-path 2>&1 | Out-Null
@@ -46,31 +52,35 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host ""
 
-Write-Host "📦 步骤 2/13: 创建 Namespace" -ForegroundColor Yellow
-kubectl apply -f namespace.yaml
+Write-Host "📦 步骤 2/14: 创建 Namespace" -ForegroundColor Yellow
+kubectl apply -f yaml/namespace.yaml
 Write-Host ""
 
-Write-Host "📦 步骤 3/13: 创建 ConfigMap (环境变量配置)" -ForegroundColor Yellow
-kubectl apply -f configmap.yaml
+Write-Host "📦 步骤 3/14: 创建 ConfigMap (环境变量配置)" -ForegroundColor Yellow
+kubectl apply -f yaml/configmap.yaml
 Write-Host ""
 
-Write-Host "📦 步骤 4/13: 创建 Secrets (敏感信息)" -ForegroundColor Yellow
-kubectl apply -f secrets.yaml
+Write-Host "📦 步骤 4/14: 创建 K8sLauncher ConfigMap" -ForegroundColor Yellow
+kubectl apply -f yaml/k8s-launcher-configmap.yaml
 Write-Host ""
 
-Write-Host "📦 步骤 5/13: 创建持久化存储 (PVC)" -ForegroundColor Yellow
-kubectl apply -f pvc.yaml
+Write-Host "📦 步骤 5/14: 创建 Secrets (敏感信息)" -ForegroundColor Yellow
+kubectl apply -f yaml/secrets.yaml
+Write-Host ""
+
+Write-Host "📦 步骤 6/14: 创建持久化存储 (PVC)" -ForegroundColor Yellow
+kubectl apply -f yaml/pvc.yaml
 Write-Host "   等待 PVC 创建..."
 Start-Sleep -Seconds 3
 kubectl get pvc -n lcagentns-app
 Write-Host ""
 
-Write-Host "📦 步骤 6/13: 部署数据库 (TiDB)" -ForegroundColor Yellow
-kubectl apply -f tidb.yaml
+Write-Host "📦 步骤 7/14: 部署数据库 (TiDB)" -ForegroundColor Yellow
+kubectl apply -f yaml/tidb.yaml
 Write-Host ""
 
-Write-Host "📦 步骤 7/13: 部署缓存 (Redis)" -ForegroundColor Yellow
-kubectl apply -f redis.yaml
+Write-Host "📦 步骤 8/14: 部署缓存 (Redis)" -ForegroundColor Yellow
+kubectl apply -f yaml/redis.yaml
 Write-Host ""
 
 Write-Host "⏳ 等待数据库就绪（最多等待 5 分钟）..." -ForegroundColor Yellow
@@ -96,28 +106,28 @@ if (-not $ready) {
 }
 Write-Host ""
 
-Write-Host "📦 步骤 8/13: 部署对象存储 (MinIO)" -ForegroundColor Yellow
-kubectl apply -f minio.yaml
+Write-Host "📦 步骤 9/14: 部署对象存储 (MinIO)" -ForegroundColor Yellow
+kubectl apply -f yaml/minio.yaml
 Write-Host ""
 
-Write-Host "📦 步骤 9/13: 部署后端服务 (API, Worker, Beat)" -ForegroundColor Yellow
-kubectl apply -f backend.yaml
+Write-Host "📦 步骤 10/14: 部署后端服务 (API, Worker, Beat)" -ForegroundColor Yellow
+kubectl apply -f yaml/backend.yaml
 Write-Host ""
 
-Write-Host "📦 步骤 10/13: 部署前端服务" -ForegroundColor Yellow
-kubectl apply -f frontend.yaml
+Write-Host "📦 步骤 11/14: 部署前端服务" -ForegroundColor Yellow
+kubectl apply -f yaml/frontend.yaml
 Write-Host ""
 
-Write-Host "📦 步骤 11/13: 部署云服务 (AMS, FT)" -ForegroundColor Yellow
-kubectl apply -f cloud-service.yaml
+Write-Host "📦 步骤 12/14: 部署云服务 (AMS, FT)" -ForegroundColor Yellow
+kubectl apply -f yaml/cloud-service.yaml
 Write-Host ""
 
-Write-Host "📦 步骤 12/13: 部署 MCP 服务" -ForegroundColor Yellow
-kubectl apply -f mcp-services.yaml
+Write-Host "📦 步骤 13/14: 部署 MCP 服务" -ForegroundColor Yellow
+kubectl apply -f yaml/mcp-services.yaml
 Write-Host ""
 
-Write-Host "📦 步骤 13/13: 部署 Nginx (反向代理)" -ForegroundColor Yellow
-kubectl apply -f nginx.yaml
+Write-Host "📦 步骤 14/14: 部署 Nginx (反向代理)" -ForegroundColor Yellow
+kubectl apply -f yaml/nginx.yaml
 Write-Host ""
 
 Write-Host "==========================================" -ForegroundColor Cyan

@@ -1,0 +1,62 @@
+# K8sLauncher 配置文件示例
+# 用于配置 K8sLauncher 创建推理服务时的容器镜像和其他参数
+# 
+# 使用方法：
+# 1. 复制此文件为 k8s-launcher-config.yaml
+# 2. 根据实际环境修改配置
+# 3. 通过 ConfigMap 挂载到 cloud-service 容器中
+# 4. 设置环境变量 K8S_CONFIG_PATH=/app/config/k8s-launcher-config.yaml
+
+# 容器镜像地址（推理服务使用的基础镜像）
+# 优先级：构造函数参数 > 配置文件 > 默认值 'lazyllm/lazyllm:k8s_launcher'
+container_image: "lcagent-core:7.0-1"
+# 或者使用镜像仓库地址：
+# container_image: "registry.cn-hangzhou.aliyuncs.com/your-namespace/lcagent-core:7.0-1"
+# container_image: "docker.io/your-org/lcagent-core:7.0-1"
+
+# Kubernetes 配置文件路径（可选）
+# 默认值: ~/.kube/config
+kube_config_path: "~/.kube/config"
+
+# Kubernetes 命名空间（可选）
+# 默认值: default
+namespace: "lcagentns-app"
+
+# Service 类型（可选）
+# 可选值: LoadBalancer, NodePort, ClusterIP
+# 默认值: LoadBalancer
+svc_type: "LoadBalancer"
+
+# 存储卷配置（可选）
+# 如果配置了 volume，所有推理服务都会挂载这些卷
+volume:
+  - name: share-data
+    mount_path: "/mnt/lustre/share_data"
+    persistent_volume_claim:
+      claim_name: "share-data-pvc"
+  # 可以添加更多卷
+  # - name: model-cache
+  #   mount_path: "/mnt/models"
+  #   persistent_volume_claim:
+  #     claim_name: "model-cache-pvc"
+
+# 资源限制配置（可选）
+# 如果配置了 resource，所有推理服务都会使用这些资源限制
+resource:
+  requests:
+    nvidia.com/gpu: "1"      # GPU 请求数量
+    memory: "16Gi"           # 内存请求
+    cpu: "2"                 # CPU 请求（核心数）
+  limits:
+    nvidia.com/gpu: "1"      # GPU 限制
+    memory: "32Gi"           # 内存限制
+    cpu: "4"                 # CPU 限制
+
+# Gateway 配置（可选，用于 Kubernetes Gateway API）
+on_gateway: false            # 是否启用 Gateway
+gateway_name: "lazyllm-gateway"  # Gateway 名称
+gateway_class_name: "istio"   # Gateway 类名（如 istio, nginx 等）
+host: null                    # HTTP 主机名（null 表示不限制）
+path: "/generate"             # HTTP 路径
+
+

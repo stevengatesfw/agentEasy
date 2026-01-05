@@ -159,3 +159,4 @@ kubectl delete -f nvidia-device-plugin.yaml
 
 **建议**：如果需要使用 GPU，在首次部署 Kubernetes 时一起部署 Device Plugin，之后就不需要再管了。
 
+

@@ -146,7 +146,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: hostpath  # 使用 hostpath 而不是 local-path，避免循环依赖
+  storageClassName: standard  # 使用 Minikube 默认的 standard StorageClass
   resources:
     requests:
       storage: 1Gi
