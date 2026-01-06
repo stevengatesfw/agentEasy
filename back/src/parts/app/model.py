@@ -174,7 +174,7 @@ class WorkflowRefer(db.Model):
     id = db.Column(StringUUID, default=lambda: str(uuid.uuid4()))
     app_id = db.Column(StringUUID, nullable=False)
     target_type = db.Column(db.String(16), nullable=False)
-    target_id = db.Column(db.String(40), nullable=False)
+    target_id = db.Column(db.String(50), nullable=False)
 
     class Types(str, Enum):
         # KNOWLEDGE = 'knowledgebase'  # 知识库
